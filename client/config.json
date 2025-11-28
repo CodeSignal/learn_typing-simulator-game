@@ -1,6 +1,11 @@
 {
+  "gameType": "racing",
   "keyboard": true,
   "availableKeys": [],
   "showStats": true,
-  "realTimeStats": ["time", "chars"]
+  "realTimeStats": ["time", "chars"],
+  "racing": {
+    "opponentSpeeds": [0.3, 0.4, 0.5],
+    "mistakesAllowed": 0
+  }
 }

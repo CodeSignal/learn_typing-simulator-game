@@ -1,6 +1,1 @@
-testing text.
-with newlines!
-
-And special symbols: \ [ `.
-
-Reach the end to finish!
+Another text to enter. Enter this text fast to beat other racers!

@@ -38,17 +38,68 @@
   <main class="main-layout">
     <div class="content-area">
       <div class="typing-container">
-        <div class="typing-text-container">
-          <div id="typing-text" class="typing-text"></div>
-          <textarea
-            id="hidden-input"
-            class="hidden-input"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck="false"
-          ></textarea>
+        <!-- Racing Track Game -->
+        <div id="racing-track-container" class="racing-track-container" style="display: none;">
+          <div class="racing-track">
+            <div class="racing-track-lane" data-lane="0">
+              <div class="racing-car racing-car-player" id="car-player">
+                <svg viewBox="0 0 40 40" width="40" height="40">
+                  <rect x="5" y="10" width="30" height="20" rx="5" fill="#3B82F6"/>
+                  <rect x="10" y="5" width="20" height="10" rx="3" fill="#2563EB"/>
+                  <circle cx="12" cy="28" r="4" fill="#1E293B"/>
+                  <circle cx="28" cy="28" r="4" fill="#1E293B"/>
+                </svg>
+              </div>
+            </div>
+            <div class="racing-track-lane" data-lane="1">
+              <div class="racing-car racing-car-opponent" id="car-opponent-1">
+                <svg viewBox="0 0 40 40" width="40" height="40">
+                  <rect x="5" y="10" width="30" height="20" rx="5" fill="#EF4444"/>
+                  <rect x="10" y="5" width="20" height="10" rx="3" fill="#DC2626"/>
+                  <circle cx="12" cy="28" r="4" fill="#1E293B"/>
+                  <circle cx="28" cy="28" r="4" fill="#1E293B"/>
+                </svg>
+              </div>
+            </div>
+            <div class="racing-track-lane" data-lane="2">
+              <div class="racing-car racing-car-opponent" id="car-opponent-2">
+                <svg viewBox="0 0 40 40" width="40" height="40">
+                  <rect x="5" y="10" width="30" height="20" rx="5" fill="#10B981"/>
+                  <rect x="10" y="5" width="20" height="10" rx="3" fill="#059669"/>
+                  <circle cx="12" cy="28" r="4" fill="#1E293B"/>
+                  <circle cx="28" cy="28" r="4" fill="#1E293B"/>
+                </svg>
+              </div>
+            </div>
+            <div class="racing-track-lane" data-lane="3">
+              <div class="racing-car racing-car-opponent" id="car-opponent-3">
+                <svg viewBox="0 0 40 40" width="40" height="40">
+                  <rect x="5" y="10" width="30" height="20" rx="5" fill="#F59E0B"/>
+                  <rect x="10" y="5" width="20" height="10" rx="3" fill="#D97706"/>
+                  <circle cx="12" cy="28" r="4" fill="#1E293B"/>
+                  <circle cx="28" cy="28" r="4" fill="#1E293B"/>
+                </svg>
+              </div>
+            </div>
+            <div class="racing-text-overlay">
+              <div id="racing-typing-text" class="racing-typing-text"></div>
+            </div>
+            <div class="racing-finish-line" id="racing-finish-line"></div>
+          </div>
         </div>
+        <!-- Classic Typing View (fallback for non-racing games) -->
+        <div class="typing-text-container" id="classic-typing-container">
+          <div id="typing-text" class="typing-text"></div>
+        </div>
+        <!-- Hidden input - must be outside containers to work in all game modes -->
+        <textarea
+          id="hidden-input"
+          class="hidden-input"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        ></textarea>
         <div id="completion-screen" class="completion-screen">
           <h2>Completed</h2>
           <p>Great job! You've finished typing the text.</p>

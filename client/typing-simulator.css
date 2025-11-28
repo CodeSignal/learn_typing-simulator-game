@@ -6,6 +6,154 @@
   overflow: hidden; /* Prevent scrolling */
 }
 
+/* Racing Track Game Styles */
+.bespoke .racing-track-container {
+  flex: 1 1 auto;
+  position: relative;
+  /* Remove width: 100% - let it be auto-width so it can be centered */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the track horizontally */
+  justify-content: flex-start;
+  margin-top: var(--UI-Spacing-spacing-lg);
+}
+
+.bespoke .racing-track {
+  position: relative;
+  width: auto; /* Width will be set dynamically via JavaScript */
+  min-width: 70px; /* Minimum width to match text start position */
+  height: 300px;
+  background: linear-gradient(to bottom,
+    var(--Colors-Box-Background-Secondary) 0%,
+    var(--Colors-Box-Background-Secondary) 48%,
+    #FFFFFF 48%,
+    #FFFFFF 52%,
+    var(--Colors-Box-Background-Secondary) 52%,
+    var(--Colors-Box-Background-Secondary) 100%
+  );
+  border: 2px solid var(--Colors-Stroke-Default);
+  border-radius: var(--UI-Radius-radius-m);
+  overflow: hidden;
+  margin-bottom: var(--UI-Spacing-spacing-md);
+  /* Centering is handled by parent container's align-items: center */
+}
+
+.bespoke .racing-track-lane {
+  position: absolute;
+  left: 0;
+  width: 100%; /* Default width, will be updated dynamically via JavaScript */
+  height: 75px;
+  border-bottom: 2px dashed var(--Colors-Stroke-Light);
+}
+
+.bespoke .racing-track-lane[data-lane="0"] {
+  top: 0;
+}
+
+.bespoke .racing-track-lane[data-lane="1"] {
+  top: 75px;
+}
+
+.bespoke .racing-track-lane[data-lane="2"] {
+  top: 150px;
+}
+
+.bespoke .racing-track-lane[data-lane="3"] {
+  top: 225px;
+  border-bottom: none;
+}
+
+.bespoke .racing-car {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: left 0.1s linear;
+  z-index: 25; /* Above finish line (z-index: 20) */
+}
+
+.bespoke .racing-car-player {
+  z-index: 30; /* Player car above opponents */
+}
+
+.bespoke .racing-text-overlay {
+  position: absolute;
+  top: 0;
+  left: 70px; /* Start after car (car at 20px + car width 40px + 10px gap) */
+  right: 0;
+  height: 75px; /* Same height as lane 0 */
+  pointer-events: none;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--UI-Spacing-spacing-xl) 0 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.bespoke .racing-text-overlay::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.bespoke .racing-typing-text {
+  width: 100%;
+  font-family: var(--body-family);
+  font-size: var(--Fonts-Body-Default-lg);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: visible;
+  user-select: none;
+  display: inline-block;
+  min-width: 100%;
+}
+
+.bespoke .racing-typing-text .char-pending {
+  color: var(--Colors-Text-Body-Light);
+}
+
+.bespoke .racing-typing-text .char-correct {
+  color: var(--Colors-Text-Body-Strongest);
+}
+
+.bespoke .racing-typing-text .char-incorrect {
+  color: var(--Colors-Alert-Error-Default);
+}
+
+.bespoke .racing-typing-text .char-incorrect.char-space {
+  background-color: color-mix(in srgb, var(--Colors-Alert-Error-Default) 30%, transparent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.bespoke .racing-typing-text .cursor-position {
+  position: relative;
+}
+
+.bespoke .racing-typing-text .cursor-position::before {
+  display: none; /* Hide cursor in racing game - car acts as cursor */
+}
+
+.bespoke .racing-finish-line {
+  position: absolute;
+  right: 0; /* Position at right edge of track */
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: repeating-linear-gradient(
+    to bottom,
+    #000000 0px,
+    #000000 10px,
+    #FFFFFF 10px,
+    #FFFFFF 20px
+  );
+  z-index: 20;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.2);
+}
+
 .bespoke .typing-container {
   position: relative;
   width: 100%;
@@ -17,6 +165,11 @@
   padding: var(--UI-Spacing-spacing-xl);
   overflow: hidden; /* Prevent scrolling */
   min-height: 0; /* Allow flexbox to shrink */
+}
+
+/* Ensure racing track container is centered */
+.bespoke .typing-container > .racing-track-container {
+  align-self: center;
 }
 
 /* Keyboard and Stats Wrapper */
@@ -116,6 +269,12 @@
 
 .bespoke .typing-text .char-incorrect {
   color: var(--Colors-Alert-Error-Default);
+}
+
+.bespoke .typing-text .char-incorrect.char-space {
+  background-color: color-mix(in srgb, var(--Colors-Alert-Error-Default) 30%, transparent);
+  border-radius: 2px;
+  padding: 0 2px;
 }
 
 .bespoke .typing-text .cursor-position {
@@ -413,6 +572,107 @@
   color: var(--Colors-Text-Body-Light);
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Racing Track Responsive Styles */
+@media (max-width: 1024px) {
+  .bespoke .racing-track {
+    height: 250px;
+  }
+
+  .bespoke .racing-track-lane {
+    height: 62.5px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="1"] {
+    top: 62.5px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="2"] {
+    top: 125px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="3"] {
+    top: 187.5px;
+  }
+
+  .bespoke .racing-text-overlay {
+    height: 62.5px; /* Match lane 0 height */
+  }
+
+  .bespoke .racing-typing-text {
+    font-size: var(--Fonts-Body-Default-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .bespoke .racing-track {
+    height: 200px;
+  }
+
+  .bespoke .racing-track-lane {
+    height: 50px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="1"] {
+    top: 50px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="2"] {
+    top: 100px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="3"] {
+    top: 150px;
+  }
+
+  .bespoke .racing-text-overlay {
+    height: 50px; /* Match lane 0 height */
+  }
+
+  .bespoke .racing-car svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .bespoke .racing-typing-text {
+    font-size: var(--Fonts-Body-Default-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .bespoke .racing-track {
+    height: 180px;
+  }
+
+  .bespoke .racing-track-lane {
+    height: 45px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="1"] {
+    top: 45px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="2"] {
+    top: 90px;
+  }
+
+  .bespoke .racing-track-lane[data-lane="3"] {
+    top: 135px;
+  }
+
+  .bespoke .racing-text-overlay {
+    height: 45px; /* Match lane 0 height */
+  }
+
+  .bespoke .racing-car svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .bespoke .racing-typing-text {
+    font-size: var(--Fonts-Body-Default-xs);
+  }
 }
 
 /* Responsive Design */

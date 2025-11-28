@@ -11,7 +11,7 @@
   let statsStartOverButton = null;
   let keyboardContainer = null;
   let realtimeStatsContainer = null;
-  let config = { keyboard: true, availableKeys: [], showStats: false, realTimeStats: [] };
+  let config = { keyboard: true, availableKeys: [], showStats: false, realTimeStats: [], gameType: 'classic' };
 
   // Normalized set of available keys (for fast lookup)
   let availableKeysSet = new Set();
@@ -31,6 +31,10 @@
 
   // Real-time stats update interval
   let realtimeStatsInterval = null;
+
+  // Game manager - handles different game types
+  let currentGame = null;
+  let gameUpdateInterval = null;
 
   function setStatus(msg) {
     const status = document.getElementById('status');
@@ -56,8 +60,327 @@
       } else {
         availableKeysSet = new Set(); // Empty set means all keys available
       }
+
+      // Set default game type if not specified
+      if (!config.gameType) {
+        config.gameType = 'classic';
+      }
     } catch (error) {
       console.warn('Error loading config:', error);
+    }
+  }
+
+  // ==================== GAME MANAGER ====================
+
+  // Racing Game Implementation
+  class RacingGame {
+    constructor() {
+      this.trackContainer = document.getElementById('racing-track-container');
+      this.typingTextElement = document.getElementById('racing-typing-text');
+      this.playerCar = document.getElementById('car-player');
+      this.opponentCars = [
+        document.getElementById('car-opponent-1'),
+        document.getElementById('car-opponent-2'),
+        document.getElementById('car-opponent-3')
+      ];
+      this.finishLine = document.getElementById('racing-finish-line');
+      this.trackElement = this.trackContainer ? this.trackContainer.querySelector('.racing-track') : null;
+
+      this.opponentPositions = [0, 0, 0];
+      this.opponentSpeeds = config.racing?.opponentSpeeds || [0.3, 0.4, 0.5];
+      // Current speeds with randomness (initialized to base speeds)
+      this.currentOpponentSpeeds = [...this.opponentSpeeds];
+      this.speedUpdateTimer = 0; // Timer for speed updates
+      this.speedUpdateInterval = 1500 + Math.random() * 1000; // Update speed every 1.5-2.5 seconds
+      this.trackWidth = 0;
+      this.finishLineTextPosition = 0; // Position in text coordinates
+      this.isFinished = false;
+      this.playerWon = null; // null = not finished, true = player won, false = player lost
+    }
+
+    initialize() {
+      if (!this.trackContainer || !this.trackElement) return;
+
+      // Show racing track, hide classic view
+      this.trackContainer.style.display = 'block';
+      const classicContainer = document.getElementById('classic-typing-container');
+      if (classicContainer) {
+        classicContainer.style.display = 'none';
+      }
+
+      // Calculate track dimensions
+      this.updateTrackDimensions();
+
+      // Reset positions
+      this.reset();
+    }
+
+    updateTrackDimensions() {
+      if (!this.trackElement) return;
+      this.trackWidth = this.trackElement.offsetWidth;
+      // Finish line position will be calculated dynamically based on text end
+    }
+
+    reset() {
+      this.opponentPositions = [0, 0, 0];
+      this.isFinished = false;
+      this.finishLineTextPosition = 0;
+      this.playerWon = null; // Reset win/loss status
+      // Reset speeds to base speeds
+      this.currentOpponentSpeeds = [...this.opponentSpeeds];
+      this.speedUpdateTimer = 0;
+      this.speedUpdateInterval = 1500 + Math.random() * 1000; // Reset update interval
+
+      if (this.playerCar) {
+        this.playerCar.style.left = '20px';
+      }
+
+      this.opponentCars.forEach((car, index) => {
+        if (car) {
+          car.style.left = '20px';
+        }
+        this.opponentPositions[index] = 0;
+      });
+
+      // Update finish line position after reset
+      setTimeout(() => {
+        this.updateFinishLinePosition();
+      }, 0);
+    }
+
+    updateOpponentSpeeds() {
+      // Update speeds with small random variations
+      // Variations are ±20% of base speed to keep it realistic
+      this.opponentSpeeds.forEach((baseSpeed, index) => {
+        const variation = 0.2; // ±20% variation
+        const randomFactor = 1 + (Math.random() * 2 - 1) * variation; // Random between 0.8 and 1.2
+        this.currentOpponentSpeeds[index] = baseSpeed * randomFactor;
+      });
+
+      // Reset timer and set new random interval
+      this.speedUpdateTimer = 0;
+      this.speedUpdateInterval = 1500 + Math.random() * 1000; // 1.5-2.5 seconds
+    }
+
+    updatePlayerPosition() {
+      if (!this.playerCar || this.isFinished || !this.typingTextElement) return;
+
+      // Get the cursor element position
+      const cursorElement = this.typingTextElement.querySelector('.cursor-position');
+      if (!cursorElement) {
+        // If no cursor, position at start of text
+        const firstChar = this.typingTextElement.querySelector('span');
+        if (firstChar) {
+          const carWidth = 40;
+          const position = 70 + firstChar.offsetLeft - carWidth; // Car front at first character
+          this.playerCar.style.left = `${Math.max(20, position)}px`;
+        }
+        return;
+      }
+
+      // Get the absolute position of the cursor within the text element
+      const cursorLeft = cursorElement.offsetLeft;
+
+      // Position car so its front (right edge) is at cursor position
+      const carWidth = 40; // Car SVG width
+      const position = 70 + cursorLeft - carWidth; // 70px is where text starts, car front at cursor
+
+      this.playerCar.style.left = `${Math.max(20, position)}px`;
+
+      // Update finish line position to end of text
+      this.updateFinishLinePosition();
+
+      // Check if player crossed finish line
+      if (cursorLeft >= this.finishLineTextPosition && !this.isFinished) {
+        this.isFinished = true;
+        this.playerWon = true; // Player finished first
+        // Completion will be handled by the main renderText function
+      }
+    }
+
+    updateFinishLinePosition() {
+      if (!this.typingTextElement || !this.finishLine) return;
+
+      // Find the last character span
+      const allChars = this.typingTextElement.querySelectorAll('span');
+      if (allChars.length === 0) {
+        // No text yet - set lanes and track to minimum width
+        const minWidth = 70; // At least where text starts
+        const lanes = this.trackElement ? this.trackElement.querySelectorAll('.racing-track-lane') : [];
+        lanes.forEach(lane => {
+          lane.style.width = `${minWidth}px`;
+        });
+        if (this.trackElement) {
+          this.trackElement.style.width = `${minWidth}px`;
+        }
+        // Finish line is positioned with right: 0 in CSS, so it automatically aligns with track edge
+        return;
+      }
+
+      const lastChar = allChars[allChars.length - 1];
+      const finishLineTextPosition = lastChar.offsetLeft + lastChar.offsetWidth;
+      this.finishLineTextPosition = finishLineTextPosition;
+
+      // Position finish line at the end of text with a buffer
+      const buffer = 20; // Buffer space between text end and finish line
+      const finishLinePosition = 70 + finishLineTextPosition + buffer; // 70px is where text starts
+
+      // Update track lanes to end at finish line
+      const lanes = this.trackElement ? this.trackElement.querySelectorAll('.racing-track-lane') : [];
+      lanes.forEach(lane => {
+        lane.style.width = `${finishLinePosition}px`;
+      });
+
+      // Update racing-track container width to match finish line
+      if (this.trackElement) {
+        this.trackElement.style.width = `${finishLinePosition}px`;
+      }
+
+      // Finish line is positioned with right: 0 in CSS, so it automatically aligns with track edge
+    }
+
+    updateOpponents() {
+      if (this.isFinished || !startTime) return;
+
+      // Update finish line position first (in case text changed)
+      this.updateFinishLinePosition();
+
+      // Update speeds periodically with randomness
+      this.speedUpdateTimer += 16; // ~60fps, so 16ms per frame
+      if (this.speedUpdateTimer >= this.speedUpdateInterval) {
+        this.updateOpponentSpeeds();
+      }
+
+      // Get finish line X position - it's at the right edge of the track
+      // Since finish line uses right: 0, we need to get track width
+      const trackWidth = this.trackElement ? this.trackElement.offsetWidth : 0;
+      const finishLineX = trackWidth; // Finish line is at the right edge
+
+      this.opponentCars.forEach((car, index) => {
+        if (!car) return;
+
+        // Use current speed (with randomness) instead of base speed
+        const speed = this.currentOpponentSpeeds[index] || this.opponentSpeeds[index] || 0.3;
+        this.opponentPositions[index] += speed;
+
+        // Calculate car position
+        // Car's left edge is at: 20px (start) + opponentPositions[index]
+        // Car's right edge (front) is at: 20px + opponentPositions[index] + 40px (car width)
+        const carWidth = 40;
+        const carLeftPosition = 20 + this.opponentPositions[index];
+        const carFrontPosition = carLeftPosition + carWidth;
+
+        // Opponents move based on their position, finish line is at end of text
+        const maxPosition = finishLineX > 0 ? finishLineX - 20 : this.trackWidth - 20;
+        const position = Math.min(carLeftPosition, maxPosition);
+        car.style.left = `${position}px`;
+
+        // Check if opponent's front touches finish line (with small buffer for visibility)
+        const buffer = 10; // Small buffer so it's obvious to user
+        if (finishLineX > 0 && carFrontPosition >= finishLineX - buffer && !this.isFinished) {
+          this.isFinished = true;
+          this.playerWon = false; // Opponent finished first
+          // Trigger completion screen when opponent wins
+          console.log('Opponent finished first! Showing completion screen.');
+          showCompletionScreen();
+        }
+      });
+    }
+
+    renderText(textHtml) {
+      if (this.typingTextElement) {
+        this.typingTextElement.innerHTML = textHtml;
+
+        // Wait for DOM to update, then update positions
+        setTimeout(() => {
+          this.updatePlayerPosition();
+          this.updateFinishLinePosition();
+        }, 0);
+      }
+    }
+
+    destroy() {
+      // Cleanup if needed
+      this.isFinished = false;
+    }
+  }
+
+  // Classic Game Implementation (original behavior)
+  class ClassicGame {
+    constructor() {
+      this.textContainer = document.getElementById('typing-text');
+    }
+
+    initialize() {
+      // Show classic view, hide racing track
+      const classicContainer = document.getElementById('classic-typing-container');
+      const racingContainer = document.getElementById('racing-track-container');
+
+      if (classicContainer) {
+        classicContainer.style.display = 'flex';
+      }
+      if (racingContainer) {
+        racingContainer.style.display = 'none';
+      }
+    }
+
+    reset() {
+      // Nothing to reset for classic game
+    }
+
+    updatePlayerPosition(progress) {
+      // No visual position update for classic game
+    }
+
+    updateOpponents() {
+      // No opponents in classic game
+    }
+
+    renderText(textHtml) {
+      if (this.textContainer) {
+        this.textContainer.innerHTML = textHtml;
+      }
+    }
+
+    destroy() {
+      // Cleanup if needed
+    }
+  }
+
+  // Game Manager
+  function initializeGame() {
+    // Clean up previous game
+    if (currentGame) {
+      currentGame.destroy();
+      if (gameUpdateInterval) {
+        clearInterval(gameUpdateInterval);
+        gameUpdateInterval = null;
+      }
+    }
+
+    // Initialize based on game type
+    const gameType = config.gameType || 'classic';
+
+    if (gameType === 'racing') {
+      currentGame = new RacingGame();
+    } else {
+      currentGame = new ClassicGame();
+    }
+
+    currentGame.initialize();
+
+    // Start game update loop for racing
+    if (gameType === 'racing' && currentGame instanceof RacingGame) {
+      gameUpdateInterval = setInterval(() => {
+        if (currentGame && currentGame.updateOpponents) {
+          currentGame.updateOpponents();
+        }
+      }, 16); // ~60fps
+    }
+
+    // Re-render text if it's already loaded
+    if (originalText.length > 0) {
+      renderText();
     }
   }
 
@@ -241,7 +564,9 @@
         throw new Error('Failed to load text file');
       }
       originalText = await response.text();
-      // Trim trailing whitespace/newlines but keep the original for display
+      // Replace all newlines with spaces (for single-line display in racing mode)
+      originalText = originalText.replace(/\n/g, ' ');
+      // Trim trailing whitespace
       originalText = originalText.trimEnd();
 
       // Initialize character states
@@ -262,30 +587,43 @@
   }
 
   function renderText() {
-    if (!textContainer) return;
+    // Calculate correct characters count
+    let correctCharsCount = 0;
+    for (let i = 0; i < charStates.length; i++) {
+      if (charStates[i] === 'correct') {
+        correctCharsCount++;
+      }
+    }
 
-    // Check if completed - show completion screen when all characters are typed
-    // (regardless of whether they're correct or not)
-    const typedTrimmed = typedText.trimEnd();
-    const originalTrimmed = originalText.trimEnd();
+    // Check if completed based on correct characters requirement
+    const mistakesAllowed = config.racing?.mistakesAllowed ?? 0;
+    const requiredCorrectChars = originalText.length - mistakesAllowed;
 
-    // Check if all characters are typed (even if there are mistakes)
-    if (typedTrimmed.length === originalTrimmed.length) {
+    if (correctCharsCount >= requiredCorrectChars && originalText.length > 0) {
       console.log('Completion detected! Showing completion screen.');
-      console.log('Typed length:', typedTrimmed.length, 'Original length:', originalTrimmed.length);
+      console.log('Correct chars:', correctCharsCount, 'Required:', requiredCorrectChars);
+
+      // For racing game, mark player as winner if not already finished
+      if (config.gameType === 'racing' && currentGame && !currentGame.isFinished) {
+        currentGame.isFinished = true;
+        currentGame.playerWon = true;
+      }
+
       showCompletionScreen();
       return;
     }
 
-    // Hide completion screen if visible and show typing container
+    // Hide completion screen if visible
     if (completionScreen) {
       completionScreen.style.display = 'none';
     }
-    const typingTextContainer = document.querySelector('.typing-text-container');
-    if (typingTextContainer) {
-      typingTextContainer.style.display = 'block';
-    }
 
+    // Calculate progress for racing game based on correct characters and required amount
+    // (reuse mistakesAllowed and requiredCorrectChars from above)
+    const progress = requiredCorrectChars > 0 ? Math.min(correctCharsCount / requiredCorrectChars, 1.0) : 0;
+
+    // Render text based on game type
+    const isRacing = config.gameType === 'racing';
     let html = '';
     const currentPosition = typedText.length;
 
@@ -308,10 +646,16 @@
 
       // Handle special characters that need escaping
       let displayChar = char;
-      if (char === ' ') {
+      const isSpace = char === ' ';
+      if (isSpace) {
         displayChar = '\u00A0'; // Non-breaking space
+        className += ' char-space'; // Add class to identify spaces
       } else if (char === '\n') {
-        displayChar = '<br>';
+        // For racing, convert newlines to spaces (single line display)
+        displayChar = isRacing ? '\u00A0' : '<br>';
+        if (isRacing) {
+          className += ' char-space'; // Add class for newlines converted to spaces
+        }
       } else {
         displayChar = escapeHtml(char);
       }
@@ -329,7 +673,18 @@
       html += '<span class="char-pending cursor-position">\u00A0</span>';
     }
 
-    textContainer.innerHTML = html;
+    // Use game's renderText method
+    if (currentGame && currentGame.renderText) {
+      currentGame.renderText(html);
+    } else if (textContainer) {
+      // Fallback to classic rendering
+      textContainer.innerHTML = html;
+    }
+
+    // Update player position in racing game (car follows cursor)
+    if (isRacing && currentGame && currentGame.updatePlayerPosition) {
+      currentGame.updatePlayerPosition();
+    }
   }
 
   function escapeHtml(text) {
@@ -371,6 +726,8 @@
     // Handle typing forward
     if (inputLength > typedLength) {
       const newChars = input.slice(typedLength);
+      let validInput = typedText; // Start with current valid text
+
       for (let i = 0; i < newChars.length; i++) {
         const charIndex = typedLength + i;
         if (charIndex >= originalText.length) {
@@ -384,18 +741,30 @@
 
         const isError = typedChar !== expectedChar;
         if (isError) {
-          charStates[charIndex] = 'incorrect';
-          totalErrors++; // Track total errors (even if later fixed)
-        } else {
-          charStates[charIndex] = 'correct';
-        }
+          // Don't add incorrect character to input, but count as error
+          totalErrors++; // Track total errors
 
-        // Highlight keyboard key
-        if (keyboardEnabled) {
-          highlightKey(typedChar, isError);
+          // Highlight keyboard key to show error
+          if (keyboardEnabled) {
+            highlightKey(typedChar, true);
+          }
+
+          // Reset input to valid text (reject the incorrect character)
+          e.target.value = validInput;
+          input = validInput;
+          break; // Stop processing further characters
+        } else {
+          // Character is correct - add it to valid input
+          validInput += typedChar;
+          charStates[charIndex] = 'correct';
+
+          // Highlight keyboard key
+          if (keyboardEnabled) {
+            highlightKey(typedChar, false);
+          }
         }
       }
-      typedText = input;
+      typedText = validInput;
     }
     // Handle backspace/delete
     else if (inputLength < typedLength) {
@@ -529,11 +898,33 @@
       activeKeyTimeout = null;
     }
 
-    // Show typing container and hide completion screen and stats dashboard
-    const typingTextContainer = document.querySelector('.typing-text-container');
-    if (typingTextContainer) {
-      typingTextContainer.style.display = 'block';
+    // Reset game
+    if (currentGame && currentGame.reset) {
+      currentGame.reset();
     }
+
+    // Show typing container and hide completion screen and stats dashboard
+    const isRacing = config.gameType === 'racing';
+    if (isRacing) {
+      const racingContainer = document.getElementById('racing-track-container');
+      if (racingContainer) {
+        racingContainer.style.display = 'block';
+      }
+      const classicContainer = document.getElementById('classic-typing-container');
+      if (classicContainer) {
+        classicContainer.style.display = 'none';
+      }
+    } else {
+      const typingTextContainer = document.querySelector('.typing-text-container');
+      if (typingTextContainer) {
+        typingTextContainer.style.display = 'block';
+      }
+      const racingContainer = document.getElementById('racing-track-container');
+      if (racingContainer) {
+        racingContainer.style.display = 'none';
+      }
+    }
+
     if (completionScreen) {
       completionScreen.style.display = 'none';
     }
@@ -734,8 +1125,15 @@
   async function saveStatistics(stats) {
     console.log('saveStatistics called with:', stats);
     try {
+      // Get win/lose status for racing games
+      let statusLine = '';
+      if (config.gameType === 'racing' && currentGame && currentGame.playerWon !== null) {
+        const status = currentGame.playerWon ? 'win' : 'lose';
+        statusLine = `Status: ${status}\n\n`;
+      }
+
       // Format statistics text
-      const statsText = `Typing Statistics
+      const statsText = `${statusLine}Typing Statistics
 ==================
 
 Total Errors Made: ${stats.totalErrors}
@@ -800,9 +1198,15 @@ Generated: ${new Date().toLocaleString()}
   // Load and display stats dashboard
   async function showStatsDashboard() {
     // Hide typing container
-    const typingTextContainer = document.querySelector('.typing-text-container');
+    const typingTextContainer = document.getElementById('classic-typing-container');
     if (typingTextContainer) {
       typingTextContainer.style.display = 'none';
+    }
+
+    // Hide racing track
+    const racingTrackContainer = document.getElementById('racing-track-container');
+    if (racingTrackContainer) {
+      racingTrackContainer.style.display = 'none';
     }
 
     // Hide the restart button when dashboard is shown
@@ -833,18 +1237,38 @@ Generated: ${new Date().toLocaleString()}
 
     try {
       const response = await fetch('./stats.txt');
-      if (!response.ok) {
-        console.error('Failed to load stats file');
-        // Fall back to simple completion screen
-        // Keyboard is already hidden above
-        if (completionScreen) {
-          completionScreen.style.display = 'flex';
-        }
-        return;
+      let stats = null;
+
+      if (response.ok) {
+        const statsText = await response.text();
+        stats = parseStatsText(statsText);
+      } else {
+        console.warn('Stats file not found, using default values');
+        // Create default stats object with zeros
+        stats = {
+          totalErrors: 0,
+          errorsLeft: 0,
+          totalTime: 0,
+          accuracy: 0,
+          speed: 0
+        };
       }
 
-      const statsText = await response.text();
-      const stats = parseStatsText(statsText);
+      // Update dashboard header based on win/loss (only for racing game)
+      const dashboardHeader = statsDashboard ? statsDashboard.querySelector('.stats-dashboard-header h2') : null;
+      if (dashboardHeader) {
+        if (config.gameType === 'racing' && currentGame && currentGame.playerWon !== null) {
+          if (currentGame.playerWon === true) {
+            dashboardHeader.textContent = 'Victory 🏅';
+          } else if (currentGame.playerWon === false) {
+            dashboardHeader.textContent = 'You lost! 😢';
+          } else {
+            dashboardHeader.textContent = 'Typing Statistics'; // Fallback
+          }
+        } else {
+          dashboardHeader.textContent = 'Typing Statistics'; // Default for non-racing games
+        }
+      }
 
       // Update dashboard with stats
       const speedEl = document.getElementById('stat-speed');
@@ -899,9 +1323,16 @@ Generated: ${new Date().toLocaleString()}
       return;
     }
 
-    const typingTextContainer = document.querySelector('.typing-text-container');
+    // Hide typing container
+    const typingTextContainer = document.getElementById('classic-typing-container');
     if (typingTextContainer) {
       typingTextContainer.style.display = 'none';
+    }
+
+    // Hide racing track
+    const racingTrackContainer = document.getElementById('racing-track-container');
+    if (racingTrackContainer) {
+      racingTrackContainer.style.display = 'none';
     }
 
     // Hide keyboard when completion screen is shown
@@ -930,11 +1361,15 @@ Generated: ${new Date().toLocaleString()}
     const stats = calculateStatistics();
     console.log('Statistics result:', stats);
 
+    // For racing game, show dashboard even if stats are null (e.g., opponent won before player typed)
+    const isRacingGame = config.gameType === 'racing' && currentGame;
+    const shouldShowDashboard = config.showStats === true || (isRacingGame && currentGame.playerWon !== null);
+
     if (stats) {
       console.log('Calling saveStatistics...');
       saveStatistics(stats).then(() => {
         // After saving, check if we should show stats dashboard
-        if (config.showStats === true) {
+        if (shouldShowDashboard) {
           // Wait a bit for the file to be written, then show dashboard
           setTimeout(() => {
             showStatsDashboard();
@@ -953,14 +1388,21 @@ Generated: ${new Date().toLocaleString()}
       });
     } else {
       console.log('No statistics to save (stats is null)');
-      // Show simple completion screen
-      // Ensure real-time stats are hidden
-      if (realtimeStatsContainer) {
-        realtimeStatsContainer.style.display = 'none';
-      }
-      completionScreen.style.display = 'flex';
-      if (hiddenInput) {
-        hiddenInput.blur();
+      // For racing game, still show dashboard if win/loss is determined
+      if (shouldShowDashboard) {
+        setTimeout(() => {
+          showStatsDashboard();
+        }, 200);
+      } else {
+        // Show simple completion screen
+        // Ensure real-time stats are hidden
+        if (realtimeStatsContainer) {
+          realtimeStatsContainer.style.display = 'none';
+        }
+        completionScreen.style.display = 'flex';
+        if (hiddenInput) {
+          hiddenInput.blur();
+        }
       }
     }
   }
@@ -978,10 +1420,13 @@ Generated: ${new Date().toLocaleString()}
     statsStartOverButton = document.getElementById('btn-stats-start-over');
     realtimeStatsContainer = document.getElementById('realtime-stats-container');
 
-    if (!textContainer || !hiddenInput) {
+    if (!hiddenInput) {
       console.error('Required elements not found');
       return;
     }
+
+    // Initialize game based on config
+    initializeGame();
 
     // Initialize keyboard
     initializeKeyboard();
@@ -1002,8 +1447,10 @@ Generated: ${new Date().toLocaleString()}
       statsStartOverButton.addEventListener('click', restart);
     }
 
-    // Focus the input when clicking on the text container
+    // Focus the input when clicking on the text container or racing track
     const typingTextContainer = document.querySelector('.typing-text-container');
+    const racingTrackContainer = document.getElementById('racing-track-container');
+
     if (typingTextContainer) {
       typingTextContainer.addEventListener('click', () => {
         const isCompletionVisible = completionScreen && completionScreen.style.display === 'flex';
@@ -1014,8 +1461,28 @@ Generated: ${new Date().toLocaleString()}
       });
     }
 
+    if (racingTrackContainer) {
+      racingTrackContainer.addEventListener('click', () => {
+        const isCompletionVisible = completionScreen && completionScreen.style.display === 'flex';
+        const isStatsVisible = statsDashboard && statsDashboard.style.display === 'flex';
+        if (hiddenInput && !isCompletionVisible && !isStatsVisible) {
+          hiddenInput.focus();
+        }
+      });
+    }
+
     // Load the text
-    loadText();
+    await loadText();
+
+    // Update track dimensions after text is loaded (for racing game)
+    if (currentGame && currentGame.updateTrackDimensions) {
+      // Wait for layout to settle
+      setTimeout(() => {
+        if (currentGame && currentGame.updateTrackDimensions) {
+          currentGame.updateTrackDimensions();
+        }
+      }, 100);
+    }
 
     // Initialize real-time stats display
     updateRealtimeStats();
@@ -1028,6 +1495,19 @@ Generated: ${new Date().toLocaleString()}
         hiddenInput.focus();
       }
     }, 100);
+
+    // Handle window resize for racing game
+    let resizeTimeout = null;
+    window.addEventListener('resize', () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(() => {
+        if (currentGame && currentGame.updateTrackDimensions) {
+          currentGame.updateTrackDimensions();
+        }
+      }, 250);
+    });
   }
 
   // Initialize when DOM is ready
