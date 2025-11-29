@@ -60,7 +60,19 @@ def extract_stats():
     if match:
         stats['generated'] = match.group(1).strip()
 
+    # Extract Status (win/lose) for racing games
+    match = re.search(r'Status:\s*(win|lose)', content, re.IGNORECASE)
+    if match:
+        stats['status'] = match.group(1).lower()
+
     # Print all statistics
+    # Print status first if available
+    if 'status' in stats:
+        status_display = "WIN" if stats['status'] == 'win' else "LOSE"
+        print(f"Status: {status_display}")
+        print("=" * 50)
+        print()
+
     print("Typing Statistics")
     print("=" * 50)
     print()
