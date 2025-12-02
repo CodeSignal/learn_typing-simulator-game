@@ -1,12 +1,12 @@
-Status: win
+Status: lose
 
 Typing Statistics
 ==================
 
-Total Errors Made: 2
+Total Errors Made: 147
 Errors Left (Unfixed): 0
-Total Time: 11.19 seconds
-Accuracy: 97.01%
-Speed: 64.35 words per minute
+Total Time: 23.27 seconds
+Accuracy: 10.37%
+Speed: 30.94 words per minute
 
-Generated: 29/11/2025, 01:27:42
+Generated: 02/12/2025, 05:55:45

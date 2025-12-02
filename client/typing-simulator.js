@@ -35,6 +35,7 @@
   // Game manager - handles different game types
   let currentGame = null;
   let gameUpdateInterval = null;
+  let gameAnimationFrame = null;
 
   function setStatus(msg) {
     const status = document.getElementById('status');
@@ -88,10 +89,14 @@
 
       this.opponentPositions = [0, 0, 0];
       this.opponentSpeeds = config.racing?.opponentSpeeds || [0.3, 0.4, 0.5];
+      // Convert speeds from pixels per frame (at 60fps) to pixels per second
+      // Original speeds: 0.3, 0.4, 0.5 px/frame at 60fps = 18, 24, 30 px/s
+      this.opponentSpeedsPxPerSec = this.opponentSpeeds.map(speed => speed * 60);
       // Current speeds with randomness (initialized to base speeds)
-      this.currentOpponentSpeeds = [...this.opponentSpeeds];
-      this.speedUpdateTimer = 0; // Timer for speed updates
+      this.currentOpponentSpeeds = [...this.opponentSpeedsPxPerSec];
+      this.speedUpdateTimer = 0; // Timer for speed updates (in milliseconds)
       this.speedUpdateInterval = 1500 + Math.random() * 1000; // Update speed every 1.5-2.5 seconds
+      this.lastFrameTime = null; // For delta time calculation
       this.trackWidth = 0;
       this.finishLineTextPosition = 0; // Position in text coordinates
       this.isFinished = false;
@@ -126,10 +131,11 @@
       this.isFinished = false;
       this.finishLineTextPosition = 0;
       this.playerWon = null; // Reset win/loss status
-      // Reset speeds to base speeds
-      this.currentOpponentSpeeds = [...this.opponentSpeeds];
+      // Reset speeds to base speeds (in px/s)
+      this.currentOpponentSpeeds = [...this.opponentSpeedsPxPerSec];
       this.speedUpdateTimer = 0;
       this.speedUpdateInterval = 1500 + Math.random() * 1000; // Reset update interval
+      this.lastFrameTime = null; // Reset frame time
 
       if (this.playerCar) {
         this.playerCar.style.left = '20px';
@@ -151,7 +157,7 @@
     updateOpponentSpeeds() {
       // Update speeds with small random variations
       // Variations are ±20% of base speed to keep it realistic
-      this.opponentSpeeds.forEach((baseSpeed, index) => {
+      this.opponentSpeedsPxPerSec.forEach((baseSpeed, index) => {
         const variation = 0.2; // ±20% variation
         const randomFactor = 1 + (Math.random() * 2 - 1) * variation; // Random between 0.8 and 1.2
         this.currentOpponentSpeeds[index] = baseSpeed * randomFactor;
@@ -239,14 +245,26 @@
       // Finish line is positioned with right: 0 in CSS, so it automatically aligns with track edge
     }
 
-    updateOpponents() {
+    updateOpponents(currentTime) {
       if (this.isFinished || !startTime) return;
+
+      // Calculate delta time (time since last frame) in seconds
+      let deltaTime = 0;
+      if (this.lastFrameTime !== null) {
+        deltaTime = (currentTime - this.lastFrameTime) / 1000; // Convert to seconds
+        // Clamp delta time to prevent large jumps (e.g., when tab regains focus)
+        deltaTime = Math.min(deltaTime, 0.1); // Max 100ms delta (10fps minimum)
+      }
+      this.lastFrameTime = currentTime;
+
+      // Skip update if this is the first frame (no delta time yet)
+      if (deltaTime === 0) return;
 
       // Update finish line position first (in case text changed)
       this.updateFinishLinePosition();
 
       // Update speeds periodically with randomness
-      this.speedUpdateTimer += 16; // ~60fps, so 16ms per frame
+      this.speedUpdateTimer += deltaTime * 1000; // Convert to milliseconds
       if (this.speedUpdateTimer >= this.speedUpdateInterval) {
         this.updateOpponentSpeeds();
       }
@@ -259,9 +277,11 @@
       this.opponentCars.forEach((car, index) => {
         if (!car) return;
 
-        // Use current speed (with randomness) instead of base speed
-        const speed = this.currentOpponentSpeeds[index] || this.opponentSpeeds[index] || 0.3;
-        this.opponentPositions[index] += speed;
+        // Use current speed (with randomness) in pixels per second
+        // Multiply by deltaTime to get frame-rate independent movement
+        const speedPxPerSec = this.currentOpponentSpeeds[index] || this.opponentSpeedsPxPerSec[index] || 18;
+        const movementThisFrame = speedPxPerSec * deltaTime; // pixels this frame
+        this.opponentPositions[index] += movementThisFrame;
 
         // Calculate car position
         // Car's left edge is at: 20px (start) + opponentPositions[index]
@@ -356,6 +376,10 @@
         clearInterval(gameUpdateInterval);
         gameUpdateInterval = null;
       }
+      if (gameAnimationFrame !== null) {
+        cancelAnimationFrame(gameAnimationFrame);
+        gameAnimationFrame = null;
+      }
     }
 
     // Initialize based on game type
@@ -369,13 +393,17 @@
 
     currentGame.initialize();
 
-    // Start game update loop for racing
+    // Start game update loop for racing using requestAnimationFrame
     if (gameType === 'racing' && currentGame instanceof RacingGame) {
-      gameUpdateInterval = setInterval(() => {
+      function animate(currentTime) {
         if (currentGame && currentGame.updateOpponents) {
-          currentGame.updateOpponents();
+          currentGame.updateOpponents(currentTime);
         }
-      }, 16); // ~60fps
+        // Continue animation loop
+        gameAnimationFrame = requestAnimationFrame(animate);
+      }
+      // Start the animation loop
+      gameAnimationFrame = requestAnimationFrame(animate);
     }
 
     // Re-render text if it's already loaded
