@@ -748,7 +748,7 @@
       this.startKeyListener = (e) => {
         if (this.hasStarted || this.isFinished) return;
 
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Space') {
+        if (e.key === 'Enter' || e.key === 'Return' || e.key === ' ' || e.key === 'Space') {
           e.preventDefault();
           this.beginGame();
         }
@@ -1280,10 +1280,11 @@
   }
 
   function handleKeyDown(e) {
-    // Special handling for meteorite rain game - Enter key submits word or starts game
+    // Special handling for meteorite rain game - Space key submits word or starts game
     if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
-      if (e.key === 'Enter' || e.key === 'Return') {
-        e.preventDefault(); // Prevent default newline behavior
+      // Space key submits word or starts game
+      if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault(); // Prevent default space behavior
 
         // If game hasn't started, start it
         if (!currentGame.hasStarted) {
@@ -1314,8 +1315,8 @@
         return;
       }
 
-      // Space key can also start the game
-      if ((e.key === ' ' || e.key === 'Space') && !currentGame.hasStarted) {
+      // Enter key can also start the game (for convenience)
+      if ((e.key === 'Enter' || e.key === 'Return') && !currentGame.hasStarted) {
         e.preventDefault();
         currentGame.beginGame();
         return;
@@ -1703,7 +1704,7 @@
         statusLine = `Status: ${status}\n\n`;
       } else if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
         const score = currentGame.getScore ? currentGame.getScore() : 0;
-        statusLine = `Final Score: ${score}\n\n`;
+        statusLine = `Score: ${score}\n\n`;
       }
 
       // Format statistics text
@@ -1948,12 +1949,29 @@ Generated: ${new Date().toLocaleString()}
 
     // Calculate and save statistics
     console.log('About to calculate statistics...');
-    const stats = calculateStatistics();
+    let stats = calculateStatistics();
     console.log('Statistics result:', stats);
+
+    // For meteorite rain games, create stats even if calculateStatistics returns null
+    const isMeteoriteRainGame = config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame;
+    if (isMeteoriteRainGame && (!stats || stats === null)) {
+      // Create minimal stats for meteorite rain using game's own timing
+      const gameStartTime = currentGame.gameStartTime;
+      const endTime = Date.now();
+      const totalTimeSeconds = gameStartTime ? (endTime - gameStartTime) / 1000 : 0;
+
+      stats = {
+        totalErrors: 0,
+        errorsLeft: 0,
+        totalTime: totalTimeSeconds,
+        accuracy: 100, // Not applicable for word-based game, but set to 100
+        speed: 0 // Not applicable for word-based game
+      };
+      console.log('Created stats for meteorite rain game:', stats);
+    }
 
     // For racing game or meteorite rain, show dashboard even if stats are null
     const isRacingGame = config.gameType === 'racing' && currentGame;
-    const isMeteoriteRainGame = config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame;
     const shouldShowDashboard = config.showStats === true || (isRacingGame && currentGame.playerWon !== null) || isMeteoriteRainGame;
 
     if (stats) {
