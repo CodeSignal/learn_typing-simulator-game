@@ -1,5 +1,5 @@
 {
-  "gameType": "racing",
+  "gameType": "meteoriteRain",
   "keyboard": true,
   "availableKeys": [],
   "showStats": true,
@@ -7,5 +7,17 @@
   "racing": {
     "opponentSpeeds": [0.3, 0.4, 0.5],
     "mistakesAllowed": 0
+  },
+  "meteoriteRain": {
+    "meteoriteSpeed": 50,
+    "spawnInterval": 2000,
+    "pointsPerChar": 100,
+    "difficulty": {
+      "baseSpawnInterval": 2000,
+      "minSpawnInterval": 1500,
+      "baseSpeed": 50,
+      "maxSpeed": 100,
+      "difficultyIncreaseRate": 0.05
+    }
   }
 }

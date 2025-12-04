@@ -1,10 +1,9 @@
 // app.js
 (function() {
-  const status = document.getElementById('status');
   let websocket = null;
 
   function setStatus(msg) {
-    status.textContent = msg;
+    // Status element removed - function kept for compatibility but does nothing
   }
 
   // Initialize WebSocket connection

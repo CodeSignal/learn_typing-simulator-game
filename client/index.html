@@ -29,9 +29,6 @@
   <!-- Navigation Header -->
   <header class="header">
     <h1>Typing Simulator</h1>
-    <div class="spacer"></div>
-    <div id="status" class="status">Ready</div>
-    <button id="btn-help" class="button button-text">Help</button>
   </header>
 
   <!-- Main Application Content -->
@@ -85,6 +82,38 @@
               <div id="racing-typing-text" class="racing-typing-text"></div>
             </div>
             <div class="racing-finish-line" id="racing-finish-line"></div>
+          </div>
+        </div>
+        <!-- Meteorite Rain Game -->
+        <div id="meteorite-rain-container" class="meteorite-rain-container" style="display: none;">
+          <div class="meteorite-rain-game">
+            <div class="meteorite-rain-ui">
+              <div class="meteorite-score" id="meteorite-score">0</div>
+              <div class="meteorite-lives" id="meteorite-lives">
+                <div class="meteorite-heart"></div>
+                <div class="meteorite-heart"></div>
+                <div class="meteorite-heart"></div>
+              </div>
+            </div>
+            <div class="meteorite-start-message" id="meteorite-start-message">
+              Press space to start
+            </div>
+            <div class="meteorite-rain-play-area" id="meteorite-play-area">
+              <!-- Meteorites will be dynamically added here -->
+            </div>
+            <div class="meteorite-ground" id="meteorite-ground"></div>
+            <div class="meteorite-typing-input-container">
+              <input
+                type="text"
+                id="meteorite-typing-input"
+                class="input"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                placeholder=""
+              />
+            </div>
           </div>
         </div>
         <!-- Classic Typing View (fallback for non-racing games) -->

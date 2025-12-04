@@ -38,10 +38,7 @@
   let gameAnimationFrame = null;
 
   function setStatus(msg) {
-    const status = document.getElementById('status');
-    if (status) {
-      status.textContent = msg;
-    }
+    // Status element removed - function kept for compatibility but does nothing
   }
 
   // Load configuration
@@ -367,6 +364,425 @@
     }
   }
 
+  // Meteorite Rain Game Implementation
+  class MeteoriteRainGame {
+    constructor() {
+      this.container = document.getElementById('meteorite-rain-container');
+      this.playArea = document.getElementById('meteorite-play-area');
+      this.scoreElement = document.getElementById('meteorite-score');
+      this.livesElement = document.getElementById('meteorite-lives');
+      this.typingInput = document.getElementById('meteorite-typing-input');
+      this.ground = document.getElementById('meteorite-ground');
+      this.startMessage = document.getElementById('meteorite-start-message');
+      this.heartElements = null; // Will be populated when lives element is available
+
+      this.meteorites = [];
+      this.words = [];
+      this.score = 0;
+      this.lives = 3;
+      this.isFinished = false;
+      this.hasStarted = false; // Track if game has started
+      this.currentTypedWord = '';
+      this.spawnTimer = 0;
+      this.lastFrameTime = null;
+      this.gameStartTime = null;
+      this.pointsPerChar = config.meteoriteRain?.pointsPerChar || 100;
+      this.spawnIntervalId = null;
+      this.animationFrame = null;
+      this.startKeyListener = null; // Store reference to start key listener
+
+      // Difficulty settings
+      const difficultyConfig = config.meteoriteRain?.difficulty || {};
+      this.baseSpawnInterval = difficultyConfig.baseSpawnInterval || config.meteoriteRain?.spawnInterval || 2000;
+      this.minSpawnInterval = difficultyConfig.minSpawnInterval || 500;
+      this.baseSpeed = difficultyConfig.baseSpeed || config.meteoriteRain?.meteoriteSpeed || 50;
+      this.maxSpeed = difficultyConfig.maxSpeed || 150;
+      this.difficultyIncreaseRate = difficultyConfig.difficultyIncreaseRate || 0.1;
+    }
+
+    initialize() {
+      if (!this.container || !this.playArea) return;
+
+      // Show meteorite rain container, hide others
+      this.container.style.display = 'flex';
+      const classicContainer = document.getElementById('classic-typing-container');
+      const racingContainer = document.getElementById('racing-track-container');
+      if (classicContainer) {
+        classicContainer.style.display = 'none';
+      }
+      if (racingContainer) {
+        racingContainer.style.display = 'none';
+      }
+
+      // Reset game state
+      this.reset();
+    }
+
+    extractWords() {
+      // Split text into words (split by whitespace and filter empty strings)
+      this.words = originalText
+        .split(/\s+/)
+        .filter(word => word.length > 0)
+        .map(word => word.toLowerCase().trim());
+
+      // Remove duplicates while preserving order
+      this.words = [...new Set(this.words)];
+
+      console.log('Extracted words:', this.words);
+    }
+
+    reset() {
+      // Extract words if not already extracted
+      if (this.words.length === 0 && originalText.length > 0) {
+        this.extractWords();
+      }
+
+      // Clear all meteorites
+      this.meteorites.forEach(meteorite => {
+        if (meteorite.element && meteorite.element.parentNode) {
+          meteorite.element.parentNode.removeChild(meteorite.element);
+        }
+      });
+      this.meteorites = [];
+
+      // Reset game state
+      this.score = 0;
+      this.lives = 3;
+      this.isFinished = false;
+      this.hasStarted = false;
+      this.currentTypedWord = '';
+      this.spawnTimer = 0;
+      this.lastFrameTime = null;
+      this.gameStartTime = null;
+      this.heartElements = null; // Reset heart elements cache
+
+      // Remove old start key listener if exists
+      if (this.startKeyListener) {
+        document.removeEventListener('keydown', this.startKeyListener);
+        this.startKeyListener = null;
+      }
+
+      // Show start message
+      if (this.startMessage) {
+        this.startMessage.style.display = 'flex';
+      }
+
+      // Update UI
+      this.updateScore();
+      this.updateLives();
+      this.updateTypingDisplay();
+
+      // Clear intervals and animation frames
+      if (this.spawnIntervalId) {
+        clearTimeout(this.spawnIntervalId);
+        this.spawnIntervalId = null;
+      }
+      if (this.animationFrame !== null) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+      }
+    }
+
+    getCurrentDifficulty() {
+      if (!this.gameStartTime) return 0;
+      const elapsedSeconds = (Date.now() - this.gameStartTime) / 1000;
+      // Difficulty increases linearly over time
+      return Math.min(elapsedSeconds * this.difficultyIncreaseRate, 1.0);
+    }
+
+    getRandomSpawnInterval() {
+      const difficulty = this.getCurrentDifficulty();
+      // As difficulty increases, spawn interval decreases
+      // At difficulty 0: baseSpawnInterval
+      // At difficulty 1: minSpawnInterval
+      const minInterval = this.minSpawnInterval;
+      const maxInterval = this.baseSpawnInterval;
+      const currentMaxInterval = maxInterval - (maxInterval - minInterval) * difficulty;
+
+      // Random interval between 70% and 100% of current max interval
+      const randomFactor = 0.7 + Math.random() * 0.3;
+      return Math.max(minInterval, currentMaxInterval * randomFactor);
+    }
+
+    getCurrentSpeed() {
+      const difficulty = this.getCurrentDifficulty();
+      // As difficulty increases, speed increases
+      // At difficulty 0: baseSpeed
+      // At difficulty 1: maxSpeed
+      return this.baseSpeed + (this.maxSpeed - this.baseSpeed) * difficulty;
+    }
+
+    spawnMeteorite() {
+      if (this.isFinished || !this.hasStarted || this.words.length === 0) return;
+
+      // Pick a random word
+      const word = this.words[Math.floor(Math.random() * this.words.length)];
+
+      // Get current speed for this meteorite
+      const currentSpeed = this.getCurrentSpeed();
+
+      // Create meteorite element
+      const meteorite = document.createElement('div');
+      meteorite.className = 'meteorite';
+
+      const circle = document.createElement('div');
+      circle.className = 'meteorite-circle';
+
+      const wordElement = document.createElement('div');
+      wordElement.className = 'meteorite-word';
+      wordElement.textContent = word;
+
+      meteorite.appendChild(circle);
+      meteorite.appendChild(wordElement);
+      this.playArea.appendChild(meteorite);
+
+      // Random horizontal position (with padding from edges to avoid score and hearts)
+      const padding = 100;
+      const maxX = this.playArea.offsetWidth - padding;
+      const x = padding + Math.random() * (maxX - padding);
+
+      meteorite.style.left = `${x}px`;
+      meteorite.style.top = '0px';
+
+      // Store meteorite data with its speed
+      const meteoriteData = {
+        element: meteorite,
+        word: word,
+        y: 0,
+        x: x,
+        speed: currentSpeed // Each meteorite has its own speed based on when it was spawned
+      };
+
+      this.meteorites.push(meteoriteData);
+    }
+
+    updateMeteorites(currentTime) {
+      if (this.isFinished || !this.hasStarted) return;
+
+      // Calculate delta time
+      let deltaTime = 0;
+      if (this.lastFrameTime !== null) {
+        deltaTime = (currentTime - this.lastFrameTime) / 1000;
+        deltaTime = Math.min(deltaTime, 0.1); // Clamp to prevent large jumps
+      }
+      this.lastFrameTime = currentTime;
+
+      if (deltaTime === 0) return;
+
+      const playAreaHeight = this.playArea.offsetHeight;
+      const groundHeight = this.ground ? this.ground.offsetHeight : 20;
+
+      // Update each meteorite position
+      this.meteorites.forEach((meteorite, index) => {
+        // Move meteorite down using its individual speed
+        const speedPxPerSec = meteorite.speed || this.baseSpeed;
+        const movementThisFrame = speedPxPerSec * deltaTime;
+        meteorite.y += movementThisFrame;
+        meteorite.element.style.top = `${meteorite.y}px`;
+
+        // Check if meteorite hit the ground
+        const meteoriteBottom = meteorite.y + meteorite.element.offsetHeight;
+        if (meteoriteBottom >= playAreaHeight - groundHeight) {
+          // Meteorite hit the ground - lose a life
+          this.loseLife();
+          this.destroyMeteorite(index);
+        }
+      });
+
+      // Check if game should end
+      if (this.lives <= 0 && !this.isFinished) {
+        this.endGame();
+      }
+    }
+
+    destroyMeteorite(index) {
+      const meteorite = this.meteorites[index];
+      if (meteorite && meteorite.element && meteorite.element.parentNode) {
+        meteorite.element.parentNode.removeChild(meteorite.element);
+      }
+      this.meteorites.splice(index, 1);
+    }
+
+    checkWordMatch(typedWord) {
+      if (!typedWord || typedWord.length === 0) return false;
+
+      const typedLower = typedWord.toLowerCase().trim();
+
+      // Find matching meteorite
+      for (let i = 0; i < this.meteorites.length; i++) {
+        const meteorite = this.meteorites[i];
+        if (meteorite.word.toLowerCase() === typedLower) {
+          // Match! Destroy meteorite and award points
+          const points = meteorite.word.length * this.pointsPerChar;
+          this.score += points;
+          this.updateScore();
+          this.destroyMeteorite(i);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    loseLife() {
+      if (this.lives > 0) {
+        this.lives--;
+        this.updateLives();
+      }
+    }
+
+    endGame() {
+      this.isFinished = true;
+
+      // Stop spawning
+      if (this.spawnIntervalId) {
+        clearTimeout(this.spawnIntervalId);
+        this.spawnIntervalId = null;
+      }
+
+      // Stop animation
+      if (this.animationFrame !== null) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+      }
+
+      // Show completion screen with score
+      showCompletionScreen();
+    }
+
+    updateScore() {
+      if (this.scoreElement) {
+        this.scoreElement.textContent = this.score;
+      }
+    }
+
+    updateLives() {
+      if (!this.livesElement) return;
+
+      // Get or cache heart elements
+      if (!this.heartElements) {
+        this.heartElements = this.livesElement.querySelectorAll('.meteorite-heart');
+      }
+
+      // Show/hide hearts based on current lives
+      if (this.heartElements) {
+        this.heartElements.forEach((heart, index) => {
+          if (index < this.lives) {
+            heart.style.display = 'inline-block';
+          } else {
+            heart.style.display = 'none';
+          }
+        });
+      }
+    }
+
+    updateTypingDisplay() {
+      // Input element is managed by handleInput, no need to update display separately
+    }
+
+    setTypedWord(word) {
+      this.currentTypedWord = word;
+      // Input value is managed by the input element itself
+    }
+
+    beginGame() {
+      // Mark game as started
+      this.hasStarted = true;
+
+      // Hide start message
+      if (this.startMessage) {
+        this.startMessage.style.display = 'none';
+      }
+
+      // Remove start key listener
+      if (this.startKeyListener) {
+        document.removeEventListener('keydown', this.startKeyListener);
+        this.startKeyListener = null;
+      }
+
+      // Set game start time for difficulty calculation
+      this.gameStartTime = Date.now();
+
+      // Start spawning meteorites with dynamic intervals
+      this.spawnMeteorite(); // Spawn first one immediately
+
+      // Schedule next spawn with random interval based on difficulty
+      const scheduleNextSpawn = () => {
+        if (this.isFinished || !this.hasStarted) return;
+
+        const nextInterval = this.getRandomSpawnInterval();
+        this.spawnIntervalId = setTimeout(() => {
+          if (!this.isFinished && this.hasStarted) {
+            this.spawnMeteorite();
+            scheduleNextSpawn(); // Schedule next spawn
+          }
+        }, nextInterval);
+      };
+
+      scheduleNextSpawn();
+
+      // Start animation loop
+      const animate = (currentTime) => {
+        if (this.isFinished || !this.hasStarted) return;
+        this.updateMeteorites(currentTime);
+        this.animationFrame = requestAnimationFrame(animate);
+      };
+      this.animationFrame = requestAnimationFrame(animate);
+
+      // Focus the input element
+      if (this.typingInput) {
+        setTimeout(() => {
+          if (this.typingInput) {
+            this.typingInput.focus();
+          }
+        }, 100);
+      }
+    }
+
+    startGame() {
+      // Set up key listener for starting the game
+      this.setupStartListener();
+    }
+
+    setupStartListener() {
+      // Listen for Enter or Space to start the game
+      this.startKeyListener = (e) => {
+        if (this.hasStarted || this.isFinished) return;
+
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Space') {
+          e.preventDefault();
+          this.beginGame();
+        }
+      };
+
+      document.addEventListener('keydown', this.startKeyListener);
+    }
+
+    renderText(textHtml) {
+      // Not used in meteorite rain game
+    }
+
+    destroy() {
+      // Cleanup
+      if (this.spawnIntervalId) {
+        clearTimeout(this.spawnIntervalId);
+        this.spawnIntervalId = null;
+      }
+      if (this.animationFrame !== null) {
+        cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+      }
+      if (this.startKeyListener) {
+        document.removeEventListener('keydown', this.startKeyListener);
+        this.startKeyListener = null;
+      }
+      this.reset();
+    }
+
+    getScore() {
+      return this.score;
+    }
+  }
+
   // Game Manager
   function initializeGame() {
     // Clean up previous game
@@ -387,6 +803,8 @@
 
     if (gameType === 'racing') {
       currentGame = new RacingGame();
+    } else if (gameType === 'meteoriteRain') {
+      currentGame = new MeteoriteRainGame();
     } else {
       currentGame = new ClassicGame();
     }
@@ -406,8 +824,18 @@
       gameAnimationFrame = requestAnimationFrame(animate);
     }
 
-    // Re-render text if it's already loaded
-    if (originalText.length > 0) {
+    // Start meteorite rain game
+    if (gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
+      // Start the game after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        if (currentGame && currentGame.startGame) {
+          currentGame.startGame();
+        }
+      }, 100);
+    }
+
+    // Re-render text if it's already loaded (not for meteorite rain)
+    if (originalText.length > 0 && gameType !== 'meteoriteRain') {
       renderText();
     }
   }
@@ -724,6 +1152,43 @@
   function handleInput(e) {
     let input = e.target.value;
 
+    // Special handling for meteorite rain game (word-based typing)
+    if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
+      // Don't allow typing if game hasn't started
+      if (!currentGame.hasStarted) {
+        e.target.value = '';
+        return;
+      }
+
+      // Filter out unavailable keys if availableKeys is configured
+      if (availableKeysSet.size > 0) {
+        let filteredInput = '';
+        for (let i = 0; i < input.length; i++) {
+          const char = input[i];
+          if (isKeyAvailable(char)) {
+            filteredInput += char;
+          }
+        }
+        input = filteredInput;
+        e.target.value = input;
+      }
+
+      // Update game with current typed word (no spaces allowed in word input)
+      const currentWord = input.trim();
+      if (currentGame.setTypedWord) {
+        currentGame.setTypedWord(currentWord);
+      }
+
+      // Highlight keys for meteorite rain
+      if (keyboardEnabled && currentWord.length > 0) {
+        const lastChar = currentWord[currentWord.length - 1];
+        highlightKey(lastChar, false);
+      }
+
+      return; // Don't process further for meteorite rain (Enter key handled in handleKeyDown)
+    }
+
+    // Original character-by-character handling for other game types
     // Filter out unavailable keys if availableKeys is configured
     if (availableKeysSet.size > 0) {
       let filteredInput = '';
@@ -815,7 +1280,49 @@
   }
 
   function handleKeyDown(e) {
-    // Handle Enter key - check availability but let textarea handle insertion
+    // Special handling for meteorite rain game - Enter key submits word or starts game
+    if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
+      if (e.key === 'Enter' || e.key === 'Return') {
+        e.preventDefault(); // Prevent default newline behavior
+
+        // If game hasn't started, start it
+        if (!currentGame.hasStarted) {
+          currentGame.beginGame();
+          return;
+        }
+
+        const inputElement = document.getElementById('meteorite-typing-input');
+        if (inputElement) {
+          const wordToCheck = inputElement.value.trim();
+          if (wordToCheck.length > 0) {
+            // Check if word matches a meteorite
+            if (currentGame.checkWordMatch && currentGame.checkWordMatch(wordToCheck)) {
+              // Word matched! Clear input
+              inputElement.value = '';
+              if (currentGame.setTypedWord) {
+                currentGame.setTypedWord('');
+              }
+            } else {
+              // Word didn't match, clear input anyway (player can try again)
+              inputElement.value = '';
+              if (currentGame.setTypedWord) {
+                currentGame.setTypedWord('');
+              }
+            }
+          }
+        }
+        return;
+      }
+
+      // Space key can also start the game
+      if ((e.key === ' ' || e.key === 'Space') && !currentGame.hasStarted) {
+        e.preventDefault();
+        currentGame.beginGame();
+        return;
+      }
+    }
+
+    // Handle Enter key for other game types - check availability but let textarea handle insertion
     if (e.key === 'Enter' || e.key === 'Return') {
       if (!isKeyAvailable('\n')) {
         e.preventDefault(); // Prevent if not available
@@ -881,14 +1388,14 @@
       return;
     }
 
-    // Prevent unavailable keys from being typed
-    if (availableKeysSet.size > 0 && !isKeyAvailable(e.key)) {
+    // Prevent unavailable keys from being typed (skip for meteorite rain - it has its own input)
+    if (config.gameType !== 'meteoriteRain' && availableKeysSet.size > 0 && !isKeyAvailable(e.key)) {
       e.preventDefault();
       return;
     }
 
-    // Prevent default behavior for backspace when at start
-    if (e.key === 'Backspace' && hiddenInput.value.length === 0) {
+    // Prevent default behavior for backspace when at start (only for hiddenInput, not meteorite input)
+    if (e.key === 'Backspace' && e.target === hiddenInput && hiddenInput.value.length === 0) {
       e.preventDefault();
     }
   }
@@ -931,8 +1438,10 @@
       currentGame.reset();
     }
 
-    // Show typing container and hide completion screen and stats dashboard
+    // Show appropriate container and hide completion screen and stats dashboard
     const isRacing = config.gameType === 'racing';
+    const isMeteoriteRain = config.gameType === 'meteoriteRain';
+
     if (isRacing) {
       const racingContainer = document.getElementById('racing-track-container');
       if (racingContainer) {
@@ -942,6 +1451,31 @@
       if (classicContainer) {
         classicContainer.style.display = 'none';
       }
+      const meteoriteContainer = document.getElementById('meteorite-rain-container');
+      if (meteoriteContainer) {
+        meteoriteContainer.style.display = 'none';
+      }
+    } else if (isMeteoriteRain) {
+      const meteoriteContainer = document.getElementById('meteorite-rain-container');
+      if (meteoriteContainer) {
+        meteoriteContainer.style.display = 'flex';
+      }
+      const classicContainer = document.getElementById('classic-typing-container');
+      if (classicContainer) {
+        classicContainer.style.display = 'none';
+      }
+      const racingContainer = document.getElementById('racing-track-container');
+      if (racingContainer) {
+        racingContainer.style.display = 'none';
+      }
+      // Restart meteorite rain game
+      if (currentGame && currentGame.startGame) {
+        setTimeout(() => {
+          if (currentGame && currentGame.startGame) {
+            currentGame.startGame();
+          }
+        }, 100);
+      }
     } else {
       const typingTextContainer = document.querySelector('.typing-text-container');
       if (typingTextContainer) {
@@ -950,6 +1484,10 @@
       const racingContainer = document.getElementById('racing-track-container');
       if (racingContainer) {
         racingContainer.style.display = 'none';
+      }
+      const meteoriteContainer = document.getElementById('meteorite-rain-container');
+      if (meteoriteContainer) {
+        meteoriteContainer.style.display = 'none';
       }
     }
 
@@ -984,9 +1522,14 @@
     renderText();
     setStatus('Ready');
 
-    // Focus the input after a short delay
+    // Focus the appropriate input after a short delay
     setTimeout(() => {
-      if (hiddenInput) {
+      if (isMeteoriteRain) {
+        const meteoriteInput = document.getElementById('meteorite-typing-input');
+        if (meteoriteInput) {
+          meteoriteInput.focus();
+        }
+      } else if (hiddenInput) {
         hiddenInput.focus();
       }
     }, 50);
@@ -1153,11 +1696,14 @@
   async function saveStatistics(stats) {
     console.log('saveStatistics called with:', stats);
     try {
-      // Get win/lose status for racing games
+      // Get win/lose status for racing games or score for meteorite rain
       let statusLine = '';
       if (config.gameType === 'racing' && currentGame && currentGame.playerWon !== null) {
         const status = currentGame.playerWon ? 'win' : 'lose';
         statusLine = `Status: ${status}\n\n`;
+      } else if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
+        const score = currentGame.getScore ? currentGame.getScore() : 0;
+        statusLine = `Final Score: ${score}\n\n`;
       }
 
       // Format statistics text
@@ -1237,6 +1783,12 @@ Generated: ${new Date().toLocaleString()}
       racingTrackContainer.style.display = 'none';
     }
 
+    // Hide meteorite rain container
+    const meteoriteRainContainer = document.getElementById('meteorite-rain-container');
+    if (meteoriteRainContainer) {
+      meteoriteRainContainer.style.display = 'none';
+    }
+
     // Hide the restart button when dashboard is shown
     if (restartButton && restartButton.parentElement) {
       restartButton.parentElement.style.display = 'none';
@@ -1282,10 +1834,14 @@ Generated: ${new Date().toLocaleString()}
         };
       }
 
-      // Update dashboard header based on win/loss (only for racing game)
+      // Update dashboard header based on game type
       const dashboardHeader = statsDashboard ? statsDashboard.querySelector('.stats-dashboard-header h2') : null;
       if (dashboardHeader) {
-        if (config.gameType === 'racing' && currentGame && currentGame.playerWon !== null) {
+        if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
+          // Show final score for meteorite rain
+          const score = currentGame.getScore ? currentGame.getScore() : 0;
+          dashboardHeader.textContent = `Final Score: ${score}`;
+        } else if (config.gameType === 'racing' && currentGame && currentGame.playerWon !== null) {
           if (currentGame.playerWon === true) {
             dashboardHeader.textContent = 'Victory 🏅';
           } else if (currentGame.playerWon === false) {
@@ -1363,6 +1919,12 @@ Generated: ${new Date().toLocaleString()}
       racingTrackContainer.style.display = 'none';
     }
 
+    // Hide meteorite rain container
+    const meteoriteRainContainer = document.getElementById('meteorite-rain-container');
+    if (meteoriteRainContainer) {
+      meteoriteRainContainer.style.display = 'none';
+    }
+
     // Hide keyboard when completion screen is shown
     if (keyboardContainer) {
       keyboardContainer.classList.remove('visible');
@@ -1389,9 +1951,10 @@ Generated: ${new Date().toLocaleString()}
     const stats = calculateStatistics();
     console.log('Statistics result:', stats);
 
-    // For racing game, show dashboard even if stats are null (e.g., opponent won before player typed)
+    // For racing game or meteorite rain, show dashboard even if stats are null
     const isRacingGame = config.gameType === 'racing' && currentGame;
-    const shouldShowDashboard = config.showStats === true || (isRacingGame && currentGame.playerWon !== null);
+    const isMeteoriteRainGame = config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame;
+    const shouldShowDashboard = config.showStats === true || (isRacingGame && currentGame.playerWon !== null) || isMeteoriteRainGame;
 
     if (stats) {
       console.log('Calling saveStatistics...');
@@ -1416,7 +1979,7 @@ Generated: ${new Date().toLocaleString()}
       });
     } else {
       console.log('No statistics to save (stats is null)');
-      // For racing game, still show dashboard if win/loss is determined
+      // For racing game or meteorite rain, still show dashboard
       if (shouldShowDashboard) {
         setTimeout(() => {
           showStatsDashboard();
@@ -1463,6 +2026,13 @@ Generated: ${new Date().toLocaleString()}
     hiddenInput.addEventListener('input', handleInput);
     hiddenInput.addEventListener('keydown', handleKeyDown);
 
+    // Set up event listeners for meteorite rain input
+    const meteoriteInput = document.getElementById('meteorite-typing-input');
+    if (meteoriteInput) {
+      meteoriteInput.addEventListener('input', handleInput);
+      meteoriteInput.addEventListener('keydown', handleKeyDown);
+    }
+
     if (restartButton) {
       restartButton.addEventListener('click', restart);
     }
@@ -1499,8 +2069,28 @@ Generated: ${new Date().toLocaleString()}
       });
     }
 
+    // Focus meteorite input when clicking on play area
+    const meteoritePlayArea = document.getElementById('meteorite-play-area');
+    if (meteoritePlayArea) {
+      meteoritePlayArea.addEventListener('click', () => {
+        const isCompletionVisible = completionScreen && completionScreen.style.display === 'flex';
+        const isStatsVisible = statsDashboard && statsDashboard.style.display === 'flex';
+        const meteoriteInput = document.getElementById('meteorite-typing-input');
+        if (meteoriteInput && !isCompletionVisible && !isStatsVisible) {
+          meteoriteInput.focus();
+        }
+      });
+    }
+
     // Load the text
     await loadText();
+
+    // Extract words for meteorite rain game after text is loaded
+    if (config.gameType === 'meteoriteRain' && currentGame instanceof MeteoriteRainGame) {
+      if (currentGame.extractWords) {
+        currentGame.extractWords();
+      }
+    }
 
     // Update track dimensions after text is loaded (for racing game)
     if (currentGame && currentGame.updateTrackDimensions) {
@@ -1515,11 +2105,18 @@ Generated: ${new Date().toLocaleString()}
     // Initialize real-time stats display
     updateRealtimeStats();
 
-    // Focus the input after a short delay
+    // Focus the appropriate input after a short delay
     setTimeout(() => {
       const isCompletionVisible = completionScreen && completionScreen.style.display === 'flex';
       const isStatsVisible = statsDashboard && statsDashboard.style.display === 'flex';
-      if (hiddenInput && !isCompletionVisible && !isStatsVisible) {
+      if (isCompletionVisible || isStatsVisible) return;
+
+      if (config.gameType === 'meteoriteRain') {
+        const meteoriteInput = document.getElementById('meteorite-typing-input');
+        if (meteoriteInput) {
+          meteoriteInput.focus();
+        }
+      } else if (hiddenInput) {
         hiddenInput.focus();
       }
     }, 100);

@@ -887,6 +887,147 @@
   }
 }
 
+/* Meteorite Rain Game Styles */
+.bespoke .meteorite-rain-container {
+  flex: 1 1 auto;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #000232;
+  overflow: hidden;
+}
+
+.bespoke .meteorite-rain-game {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bespoke .meteorite-rain-ui {
+  position: absolute;
+  top: var(--UI-Spacing-spacing-xl);
+  left: var(--UI-Spacing-spacing-xl);
+  right: var(--UI-Spacing-spacing-xl);
+  z-index: 100;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--UI-Spacing-spacing-xl);
+  pointer-events: none;
+}
+
+.bespoke .meteorite-score {
+  font-size: var(--Fonts-Headlines-xl);
+  font-weight: 600;
+  color: #FFFFFF;
+  font-family: var(--heading-family);
+  line-height: 1;
+}
+
+.bespoke .meteorite-lives {
+  display: flex;
+  flex-direction: row;
+  gap: var(--UI-Spacing-spacing-sm);
+  align-items: center;
+}
+
+.bespoke .meteorite-heart {
+  width: 20px;
+  height: 20px;
+  background-image: url('./assets/heart.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+}
+
+.bespoke .meteorite-start-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  font-size: var(--Fonts-Headlines-lg);
+  font-weight: 600;
+  color: #FFFFFF;
+  font-family: var(--heading-family);
+  text-align: center;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bespoke .meteorite-rain-play-area {
+  flex: 1 1 auto;
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bespoke .meteorite {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--UI-Spacing-spacing-xs);
+  z-index: 10;
+}
+
+.bespoke .meteorite-circle {
+  width: 40px;
+  height: 40px;
+  background-image: url('./assets/meteor.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.bespoke .meteorite-word {
+  font-size: var(--Fonts-Body-Default-sm);
+  font-weight: 600;
+  color: #FFFFFF;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.bespoke .meteorite-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: #C4C4C4;
+  z-index: 5;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bespoke .meteorite-typing-input-container {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px;
+  max-width: 300px;
+  width: auto;
+}
+
+.bespoke .meteorite-typing-input-container .input {
+  width: 100%;
+}
+
 @media (max-width: 480px) {
   .bespoke .keyboard-stats-wrapper {
     margin: var(--UI-Spacing-spacing-sm) auto 0;
