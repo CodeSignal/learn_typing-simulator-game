@@ -65,11 +65,22 @@ def extract_stats():
     if match:
         stats['status'] = match.group(1).lower()
 
+    # Extract Score for meteorite rain games
+    match = re.search(r'Score:\s*(\d+)', content, re.IGNORECASE)
+    if match:
+        stats['score'] = int(match.group(1))
+
     # Print all statistics
-    # Print status first if available
+    # Print status first if available (for racing games)
     if 'status' in stats:
         status_display = "WIN" if stats['status'] == 'win' else "LOSE"
         print(f"Status: {status_display}")
+        print("=" * 50)
+        print()
+
+    # Print score if available (for meteorite rain games)
+    if 'score' in stats:
+        print(f"Score: {stats['score']}")
         print("=" * 50)
         print()
 
