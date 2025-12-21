@@ -1,0 +1,31 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="50" height="50" fill="#5BDE66"/>
+<rect x="9" y="39" width="33" height="7" rx="1" fill="#D9D9D9"/>
+<path d="M9 42.5H42" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M14 42.5V39" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M12 46V42.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M18 46V42.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M24 46V42.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M30 46V42.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M36 46V42.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M20 42.5V39" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M26 42.5V39" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M32 42.5V39" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M38 42.5V39" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M12 39H38" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M18 31V39H32.5V31L25 32.5L18 31Z" fill="#7E7E7E" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M15 19L12.25 39H21.25L19 27.5C15.9684 27.82 15 20.2 15 19Z" fill="#7E7E7E" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M35.5 19L38.25 39H29.25L31.5 27.5C34.5316 27.82 35.5 20.2 35.5 19Z" fill="#7E7E7E" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M26 26L22 25L21.5 21.5L23 18L26 12L29.5 21L28 25L26 26Z" fill="#9000FF" stroke="#6800B7" stroke-width="0.2"/>
+<path d="M21.5316 21.4051C21.4792 21.3877 21.4226 21.416 21.4051 21.4684C21.3877 21.5208 21.416 21.5774 21.4684 21.5949L21.5 21.5L21.5316 21.4051ZM26 12L25.901 11.9859L24.401 22.4859L24.5 22.5L24.599 22.5141L26.099 12.0141L26 12ZM24.5 22.5L24.5316 22.4051L21.5316 21.4051L21.5 21.5L21.4684 21.5949L24.4684 22.5949L24.5 22.5ZM24.5 22.5L24.5287 22.5958L29.5287 21.0958L29.5 21L29.4713 20.9042L24.4713 22.4042L24.5 22.5ZM24.5 22.5L24.4081 22.5394L25.9081 26.0394L26 26L26.0919 25.9606L24.5919 22.4606L24.5 22.5Z" fill="#6800B7"/>
+<g filter="url(#filter0_f_27_46)">
+<circle cx="25.5" cy="19" r="6.5" stroke="white" stroke-width="3"/>
+</g>
+<defs>
+<filter id="filter0_f_27_46" x="13.5" y="7" width="24" height="24" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="2" result="effect1_foregroundBlur_27_46"/>
+</filter>
+</defs>
+</svg>

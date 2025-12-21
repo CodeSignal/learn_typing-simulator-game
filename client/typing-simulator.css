@@ -1126,3 +1126,318 @@
     min-width: 35px;
   }
 }
+
+/* Tower Defense Game Styles */
+.bespoke .tower-defense-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--UI-Spacing-spacing-lg);
+  min-height: 0;
+}
+
+.bespoke .tower-defense-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--UI-Spacing-spacing-md);
+  width: 100%;
+  max-width: 800px;
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+.bespoke .tower-defense-ui {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: var(--UI-Spacing-spacing-md);
+  background: transparent;
+  gap: var(--UI-Spacing-spacing-md);
+  flex-wrap: wrap;
+}
+
+.bespoke .td-lives,
+.bespoke .td-wave {
+  font-weight: 600;
+  color: var(--Colors-Text-Primary);
+  font-size: var(--UI-Typography-fontSize-m);
+}
+
+.bespoke .tower-defense-grid {
+  position: relative;
+  display: grid;
+  gap: 0;
+  border: 2px solid var(--Colors-Stroke-Default);
+  border-radius: var(--UI-Radius-radius-m);
+  overflow: visible;
+  background: var(--Colors-Box-Background-Secondary);
+}
+
+.bespoke .td-cell {
+  width: 50px;
+  height: 50px;
+  border: 1px solid var(--Colors-Stroke-Light);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.bespoke .td-cell-road {
+  background-color: #8B5A3C;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(0, 0, 0, 0.1) 5px,
+    rgba(0, 0, 0, 0.1) 10px
+  );
+}
+
+.bespoke .td-cell-grass {
+  background-color: #4ADE80;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Grass variants */
+.bespoke .td-cell-grass-empty {
+  background-image: url('./assets/towerdefense/grass-empty.svg');
+}
+
+.bespoke .td-cell-grass-flowers {
+  background-image: url('./assets/towerdefense/grass-flowers.svg');
+}
+
+.bespoke .td-cell-grass-strokes {
+  background-image: url('./assets/towerdefense/grass-strokes.svg');
+}
+
+.bespoke .td-cell-rock {
+  background-color: #6B7280;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: not-allowed;
+}
+
+/* Rock variants */
+.bespoke .td-cell-rock-1 {
+  background-image: url('./assets/towerdefense/rock-1.svg');
+}
+
+.bespoke .td-cell-rock-2 {
+  background-image: url('./assets/towerdefense/rock-2.svg');
+}
+
+.bespoke .td-cell-rock-3 {
+  background-image: url('./assets/towerdefense/rock-3.svg');
+}
+
+.bespoke .td-cell-entrance {
+  background-image: url('./assets/towerdefense/portal.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #F59E0B;
+}
+
+.bespoke .td-cell-castle {
+  background-image: url('./assets/towerdefense/castle.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #6366F1;
+}
+
+.bespoke .td-enemy {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background-image: url('./assets/towerdefense/enemy.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+}
+
+.bespoke .td-enemy-health-bar {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Tower Defense Towers */
+.bespoke .td-tower {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  border: none;
+  font-size: 24px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.bespoke .td-tower-archer {
+  background-image: url('./assets/towerdefense/archer.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+}
+
+.bespoke .td-tower-wizard {
+  background-image: url('./assets/towerdefense/mage.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+}
+
+.bespoke .td-tower-bomb {
+  background-image: url('./assets/towerdefense/bomb.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+}
+
+.bespoke .td-tower-attacking {
+  animation: td-tower-pulse 0.3s ease-in-out;
+}
+
+@keyframes td-tower-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Tower Defense Popup */
+.bespoke .td-tower-popup {
+  position: absolute;
+  z-index: 20;
+  background: #FFFFFF;
+  border: 2px solid var(--Colors-Stroke-Default);
+  border-radius: var(--UI-Radius-radius-m);
+  padding: var(--UI-Spacing-spacing-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: row;
+  gap: var(--UI-Spacing-spacing-sm);
+  align-items: center;
+  opacity: 1;
+}
+
+.bespoke .td-tower-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.bespoke .td-tower-option:hover:not(.td-tower-option-disabled) {
+  background: transparent;
+  transform: scale(1.1);
+}
+
+.bespoke .td-tower-option-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bespoke .td-tower-option-icon {
+  font-size: 28px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bespoke .td-gold,
+.bespoke .td-score {
+  font-weight: 600;
+  color: var(--Colors-Text-Primary);
+  font-size: var(--UI-Typography-fontSize-m);
+}
+
+/* Tower Defense Word Display - uses same styling as typing-text */
+.bespoke .tower-defense-word-display {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  padding: var(--UI-Spacing-spacing-mxl);
+  background: transparent;
+  font-family: var(--body-family);
+  font-size: var(--Fonts-Body-Default-xxxl);
+  line-height: 140%;
+  cursor: text;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  user-select: none;
+  text-align: left;
+  min-height: 0;
+}
+
+.bespoke .tower-defense-word-display .char-pending {
+  color: var(--Colors-Text-Body-Light);
+}
+
+.bespoke .tower-defense-word-display .char-correct {
+  color: var(--Colors-Text-Body-Strongest);
+}
+
+.bespoke .tower-defense-word-display .char-incorrect {
+  color: var(--Colors-Alert-Error-Default);
+}
+
+.bespoke .tower-defense-word-display .char-incorrect.char-space {
+  background-color: color-mix(in srgb, var(--Colors-Alert-Error-Default) 30%, transparent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.bespoke .tower-defense-word-display .cursor-position {
+  position: relative;
+}
+
+.bespoke .tower-defense-word-display .cursor-position::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--Colors-Primary-Default);
+  animation: blink 1s step-end infinite;
+  pointer-events: none;
+}

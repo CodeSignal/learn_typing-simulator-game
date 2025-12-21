@@ -1,0 +1,25 @@
+<svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="50" height="50" fill="#5BDE66"/>
+<path d="M12 19V38H39V19L25.5 21.5L12 19Z" fill="#D9D9D9" stroke="#C4C4C4"/>
+<path d="M25.5 32C23 32 23 36.8611 23 39H28C28 36.4722 28 32 25.5 32Z" fill="#E74900" stroke="#B13800"/>
+<path d="M11.5 13V38H18.5V13H11.5Z" fill="#D9D9D9" stroke="#C4C4C4"/>
+<path d="M32.5 13V38H39.5V13H32.5Z" fill="#D9D9D9" stroke="#C4C4C4"/>
+<rect x="9" y="38" width="33" height="7" rx="1" fill="#D9D9D9"/>
+<path d="M9 41.5H42" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M14 41.5V38" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M12 45V41.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M18 45V41.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M24 45V41.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M30 45V41.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M36 45V41.5" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M20 41.5V38" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M26 41.5V38" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M32 41.5V38" stroke="#C4C4C4" stroke-width="0.5"/>
+<path d="M38 41.5V38" stroke="#C4C4C4" stroke-width="0.5"/>
+<rect x="14" y="29" width="2" height="4" fill="black"/>
+<rect x="14" y="21" width="2" height="4" fill="black"/>
+<rect x="35" y="29" width="2" height="4" fill="black"/>
+<rect x="35" y="21" width="2" height="4" fill="black"/>
+<path d="M11 11.5L11.5 13H18.5L19 11.5V9H18.5H17.5V10.5H17H16.5H15.5V9H14.5V10.5H12.5V9H11V11.5Z" fill="#D9D9D9" stroke="#C4C4C4"/>
+<path d="M32 11.5L32.5 13H39.5L40 11.5V9H39.5H38.5V10.5H38H37.5H36.5V9H35.5V10.5H33.5V9H32V11.5Z" fill="#D9D9D9" stroke="#C4C4C4"/>
+</svg>

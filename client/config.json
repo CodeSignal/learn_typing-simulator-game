@@ -1,5 +1,5 @@
 {
-  "gameType": "meteoriteRain",
+  "gameType": "None",
   "keyboard": true,
   "availableKeys": [],
   "showStats": true,
@@ -19,5 +19,12 @@
       "maxSpeed": 100,
       "difficultyIncreaseRate": 0.05
     }
+  },
+  "towerDefense": {
+    "initialLives": 3,
+    "cellSize": 50,
+    "enemySpawnInterval": 2000,
+    "enemySpeed": 50,
+    "enemyHealth": 100
   }
 }
