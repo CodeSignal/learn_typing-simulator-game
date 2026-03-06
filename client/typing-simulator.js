@@ -1,5 +1,4 @@
 // typing-simulator.js
-(function() {
   let originalText = '';
   let typedText = '';
   let textContainer = null;
@@ -3553,9 +3552,8 @@ Generated: ${new Date().toLocaleString()}
   }
 
   // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    initialize();
-  }
-})();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initialize);
+} else {
+  initialize();
+}
