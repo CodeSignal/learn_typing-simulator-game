@@ -15,14 +15,11 @@
     "typing",
     "game",
     "simulator",
-    "bespoke",
-    "websocket"
+    "bespoke"
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {
-    "ws": "^8.14.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "concurrently": "^8.2.2",
     "vite": "^7.2.4"

@@ -15,7 +15,7 @@ npm install
 ## Run
 
 ```bash
-# local development (Vite on 3000 + API/WebSocket on 3001)
+# local development (Vite on 3000 + API server on 3001)
 npm run start:dev
 
 # production build output to dist/
@@ -44,17 +44,14 @@ Runtime behavior is controlled by `client/config.json`:
 - `client/typing-simulator.js`: core gameplay and stats logic
 - `client/typing-simulator.css`: gameplay styles
 - `client/app.css`: shared shell/layout styles
+- `client/app.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal used for help
 - `client/help-content.html`: help text shown in the modal
 - `client/text-to-input.txt`: source text used for typing
-- `server.js`: `/message`, `/save-stats`, production static hosting
+- `server.js`: `/save-stats`, production static hosting
 - `extract_solution.py`: parses and prints `client/stats.txt`
 
 ## API Endpoints
-
-- `POST /message`
-  - Body: `{ "message": "..." }`
-  - Broadcasts alert messages to connected `/ws` clients.
 
 - `POST /save-stats`
   - Body: plain text payload
@@ -63,4 +60,4 @@ Runtime behavior is controlled by `client/config.json`:
 ## Notes
 
 - Help content is loaded from `client/help-content.html` and shown via `Modal.createHelpModal` from the design system when `#btn-help` is clicked.
-- In development, Vite serves static assets and proxies `/message`, `/save-stats`, and `/ws` to the API server.
+- In development, Vite serves static assets and proxies `/save-stats` to the API server.

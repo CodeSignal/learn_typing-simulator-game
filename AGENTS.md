@@ -15,12 +15,12 @@ Supported game modes are configured in `client/config.json`:
 - `client/index.html`: single-page shell with all mode containers and controls
 - `client/typing-simulator.js`: game logic, input handling, rendering, stats
 - `client/typing-simulator.css`: simulator visuals for all game modes
-- `client/app.js`: WebSocket client + help modal bootstrap
+- `client/app.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal component used by help modal flow
 - `client/help-content.html`: help guide loaded into the modal at runtime
 - `client/config.json`: runtime feature toggles and mode parameters
 - `client/text-to-input.txt`: source text used for typing content/word pool
-- `server.js`: API server for `/message`, `/save-stats`, and production static hosting
+- `server.js`: API server for `/save-stats` and production static hosting
 - `extract_solution.py`: utility that parses and prints `client/stats.txt`
 
 ## Development Commands
@@ -30,7 +30,7 @@ Supported game modes are configured in `client/config.json`:
 git submodule update --init --recursive
 npm install
 
-# local dev (Vite on :3000, API/WebSocket server on :3001)
+# local dev (Vite on :3000, API server on :3001)
 npm run start:dev
 
 # production build
@@ -47,9 +47,6 @@ npm run start:prod
 - Stats write path:
   - client POSTs plain text to `/save-stats`
   - server writes payload to `client/stats.txt`
-- Broadcast messages:
-  - POST `/message` with JSON `{ "message": "..." }`
-  - server pushes to connected WebSocket clients on `/ws`
 
 ## Contribution Rules
 
