@@ -43,8 +43,8 @@ Runtime behavior is controlled by `client/config.json`:
 - `client/index.html`: app shell and mode containers
 - `client/typing-simulator.js`: core gameplay and stats logic
 - `client/typing-simulator.css`: gameplay styles
-- `client/app.css`: shared layout/modal styles
-- `client/help-modal.js`: modal behavior
+- `client/app.css`: shared shell/layout styles
+- `client/design-system/components/modal/modal.js`: design-system modal used for help
 - `client/help-content.html`: help text shown in the modal
 - `client/text-to-input.txt`: source text used for typing
 - `server.js`: `/message`, `/save-stats`, production static hosting
@@ -62,5 +62,5 @@ Runtime behavior is controlled by `client/config.json`:
 
 ## Notes
 
-- Help modal content is loaded from `client/help-content.html` and opened via `#btn-help`.
+- Help content is loaded from `client/help-content.html` and shown via `Modal.createHelpModal` from the design system when `#btn-help` is clicked.
 - In development, Vite serves static assets and proxies `/message`, `/save-stats`, and `/ws` to the API server.

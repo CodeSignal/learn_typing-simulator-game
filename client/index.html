@@ -20,8 +20,9 @@
   <link rel="stylesheet" href="./design-system/components/input/input.css">
   <link rel="stylesheet" href="./design-system/components/dropdown/dropdown.css">
   <link rel="stylesheet" href="./design-system/components/tags/tags.css">
+  <link rel="stylesheet" href="./design-system/components/modal/modal.css">
 
-  <!-- Shared shell components (layout, utilities, modal styles) -->
+  <!-- Shared shell components (layout and utilities) -->
   <link rel="stylesheet" href="./app.css" />
   <link rel="stylesheet" href="./typing-simulator.css" />
 </head>
@@ -194,12 +195,8 @@
     </div>
   </main>
 
-  <!-- Help Modal (automatically managed by help-modal.js) -->
-  <!-- The modal structure is created dynamically by the JavaScript -->
-
   <!-- Core scripts -->
-  <script src="./help-modal.js"></script>
-  <script src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
   <script src="./typing-simulator.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /* ===== SHARED SHELL CSS ===== */
 /* Shared Typing Simulator shell components using CodeSignal Design System tokens */
-/* Includes layout, utility, and modal styles used by the app */
+/* Includes layout and utility styles used by the app */
 
 /* ===== GLOBAL STYLES ===== */
 
@@ -103,148 +103,6 @@ html, body {
 }
 
 /* ===== TEMPORARY COMPONENTS (TODO: Replace when design system adds these) ===== */
-
-/* Modal Components - TODO: Remove when design system adds modal component */
-.bespoke .modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--UI-Spacing-spacing-xl);
-  box-sizing: border-box;
-  margin: 0;
-}
-
-.bespoke .modal-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-}
-
-.bespoke .modal-content {
-  position: relative;
-  background: var(--Colors-Backgrounds-Main-Top);
-  border: 1px solid var(--Colors-Stroke-Default);
-  border-radius: var(--UI-Radius-radius-m);
-  max-width: 800px;
-  width: calc(100% - 40px);
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  margin: 0;
-}
-
-.bespoke .modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--UI-Spacing-spacing-xl);
-  border-bottom: 1px solid var(--Colors-Stroke-Default);
-  background: var(--Colors-Backgrounds-Main-Top);
-  border-radius: var(--UI-Radius-radius-m) var(--UI-Radius-radius-m) 0 0;
-}
-
-.bespoke .modal-header h2 {
-  margin: 0;
-  font-size: var(--Fonts-Body-Default-xl);
-  color: var(--Colors-Text-Body-Strongest);
-  font-family: var(--heading-family);
-  font-weight: 500;
-}
-
-.bespoke .modal-close {
-  background: none;
-  border: none;
-  font-size: var(--Fonts-Body-Default-xxxl);
-  color: var(--Colors-Text-Body-Medium);
-  cursor: pointer;
-  padding: var(--UI-Spacing-spacing-xxs) var(--UI-Spacing-spacing-s);
-  border-radius: var(--UI-Radius-radius-xxs);
-  line-height: 1;
-  transition: all 0.2s ease;
-}
-
-.bespoke .modal-close:hover {
-  background: var(--Colors-Backgrounds-Main-Medium);
-  color: var(--Colors-Text-Body-Default);
-}
-
-.bespoke .modal-body {
-  padding: var(--UI-Spacing-spacing-xl);
-  overflow-y: auto;
-  flex: 1;
-  line-height: 1.6;
-}
-
-.bespoke .modal-body h2 {
-  margin-top: var(--UI-Spacing-spacing-xxxl);
-  margin-bottom: var(--UI-Spacing-spacing-ml);
-  font-size: var(--Fonts-Body-Default-xl);
-  color: var(--Colors-Text-Body-Strongest);
-  font-family: var(--heading-family);
-  font-weight: 500;
-}
-
-.bespoke .modal-body h2:first-child {
-  margin-top: 0;
-}
-
-.bespoke .modal-body h3 {
-  margin-top: var(--UI-Spacing-spacing-xl);
-  margin-bottom: var(--UI-Spacing-spacing-s);
-  font-size: var(--Fonts-Body-Default-lg);
-  color: var(--Colors-Text-Body-Strongest);
-  font-family: var(--heading-family);
-  font-weight: 500;
-}
-
-.bespoke .modal-body p,
-.bespoke .modal-body li {
-  color: var(--Colors-Text-Body-Default);
-  margin-bottom: var(--UI-Spacing-spacing-s);
-}
-
-.bespoke .modal-body ul,
-.bespoke .modal-body ol {
-  margin: var(--UI-Spacing-spacing-s) 0 var(--UI-Spacing-spacing-ml) 0;
-  padding-left: var(--UI-Spacing-spacing-xl);
-}
-
-.bespoke .modal-body code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: rgba(148, 163, 184, 0.12);
-  border-radius: var(--UI-Radius-radius-xxs);
-  padding: 0.15em 0.35em;
-  font-size: var(--Fonts-Body-Default-xs);
-}
-
-.bespoke .modal-body pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: rgba(148, 163, 184, 0.12);
-  border-radius: var(--UI-Radius-radius-xs);
-  padding: var(--UI-Spacing-spacing-ms);
-  overflow: auto;
-  margin: var(--UI-Spacing-spacing-ml) 0;
-}
-
-.bespoke .modal-body img,
-.bespoke .modal-body video {
-  max-width: 100%;
-  height: auto;
-  border-radius: var(--UI-Radius-radius-xs);
-  border: 1px solid var(--Colors-Stroke-Default);
-  margin: var(--UI-Spacing-spacing-ml) 0;
-}
 
 /* Form Elements - TODO: Remove when design system adds form components */
 .bespoke label {
@@ -431,15 +289,6 @@ html, body {
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
-  .bespoke .modal-backdrop {
-    background: rgba(0, 0, 0, 0.7);
-  }
-
-  .bespoke .modal-body code,
-  .bespoke .modal-body pre {
-    background: rgba(148, 163, 184, 0.2);
-  }
-
   .bespoke select {
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c1c7d7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   }
@@ -466,23 +315,4 @@ html, body {
     border-bottom: 1px solid var(--Colors-Stroke-Default);
   }
 
-  .bespoke .modal {
-    padding: var(--UI-Spacing-spacing-s);
-  }
-
-  .bespoke .modal-content {
-    max-height: 95vh;
-  }
-
-  .bespoke .modal-header {
-    padding: var(--UI-Spacing-spacing-mxl);
-  }
-
-  .bespoke .modal-body {
-    padding: var(--UI-Spacing-spacing-mxl);
-  }
-
-  .bespoke .modal-header h2 {
-    font-size: var(--Fonts-Body-Default-lg);
-  }
 }

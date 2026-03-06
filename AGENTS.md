@@ -16,7 +16,7 @@ Supported game modes are configured in `client/config.json`:
 - `client/typing-simulator.js`: game logic, input handling, rendering, stats
 - `client/typing-simulator.css`: simulator visuals for all game modes
 - `client/app.js`: WebSocket client + help modal bootstrap
-- `client/help-modal.js`: reusable modal behavior
+- `client/design-system/components/modal/modal.js`: design-system modal component used by help modal flow
 - `client/help-content.html`: help guide loaded into the modal at runtime
 - `client/config.json`: runtime feature toggles and mode parameters
 - `client/text-to-input.txt`: source text used for typing content/word pool
@@ -57,7 +57,7 @@ npm run start:prod
 - Preserve the `id` and class hooks used by `client/typing-simulator.js`.
 - If you change gameplay behavior, update both `README.md` and `client/help-content.html`.
 - If you change config keys or API payloads, update this file and README in the same change.
-- `client/app.css` contains shared shell/modal styles; keep `client/index.html` and `client/help-modal.js` aligned to that file.
+- `client/app.css` contains shared shell styles; keep `client/index.html` and the design-system asset includes aligned to that file.
 
 ## Validation Checklist
 
