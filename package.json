@@ -1,7 +1,7 @@
 {
-  "name": "bespoke-template",
+  "name": "learn-typing-simulator-game",
   "version": "0.0.2",
-  "description": "Bespoke template with local development server and WebSocket messaging",
+  "description": "Typing simulator game with classic, racing, and meteorite rain modes",
   "main": "server.js",
   "scripts": {
     "start": "npm run start:prod",
@@ -12,10 +12,10 @@
     "build": "vite build"
   },
   "keywords": [
+    "typing",
+    "game",
+    "simulator",
     "bespoke",
-    "template",
-    "development",
-    "server",
     "websocket"
   ],
   "author": "",

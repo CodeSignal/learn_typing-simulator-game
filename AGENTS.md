@@ -1,119 +1,69 @@
 # Repository Guidelines
 
-This repository contains a template for building embedded applications using
-the Bespoke Simulation framework. For complete template documentation, see
-[BESPOKE-TEMPLATE.md](./BESPOKE-TEMPLATE.md).
+## Product Context
 
-## Overview
+This repository hosts a typing simulator game built with vanilla JavaScript and
+the CodeSignal Design System.
 
-This template provides:
-- CodeSignal Design System integration
-- Consistent layout components (header, sidebar, main content area)
-- Help modal system
-- Local development server with WebSocket support
-- Standardized file structure and naming conventions
+Supported game modes are configured in `client/config.json`:
+- `classic`: standard line-by-line typing flow
+- `racing`: player car vs opponents progressing across the typed text
+- `meteoriteRain`: type falling words before they hit the ground
 
-## Quick Start
+## Runtime Architecture
 
-1. **Customize the HTML template** (`client/index.html`):
-   - Replace `<!-- APP_TITLE -->` with your page title
-   - Replace `<!-- APP_NAME -->` with your app name
-   - Add your main content at `<!-- APP_SPECIFIC_MAIN_CONTENT -->`
-   - Add app-specific CSS links at `<!-- APP_SPECIFIC_CSS -->`
-   - Add app-specific JavaScript at `<!-- APP_SPECIFIC_SCRIPTS -->`
+- `client/index.html`: single-page shell with all mode containers and controls
+- `client/typing-simulator.js`: game logic, input handling, rendering, stats
+- `client/typing-simulator.css`: simulator visuals for all game modes
+- `client/app.js`: WebSocket client + help modal bootstrap
+- `client/help-modal.js`: reusable modal behavior
+- `client/help-content.html`: help guide loaded into the modal at runtime
+- `client/config.json`: runtime feature toggles and mode parameters
+- `client/text-to-input.txt`: source text used for typing content/word pool
+- `server.js`: API server for `/message`, `/save-stats`, and production static hosting
+- `extract_solution.py`: utility that parses and prints `client/stats.txt`
 
-2. **Create your application files**:
-   - App-specific CSS (e.g., `my-app.css`)
-   - App-specific JavaScript (e.g., `my-app.js`)
-   - Help content (based on `help-content-template.html`)
-
-3. **Start the development server**:
-   ```bash
-   npm start
-   ```
-   Server runs on `http://localhost:3000`
-
-## Key Conventions
-
-### File Naming
-
-- CSS files: kebab-case (e.g., `my-app.css`)
-- JavaScript files: kebab-case (e.g., `my-app.js`)
-- Data files: kebab-case (e.g., `solution.json`)
-- Image files: kebab-case (e.g., `overview.png`)
-
-### Error Handling
-
-- Wrap all async operations in try-catch blocks
-- Provide meaningful error messages to users
-- Log errors to console for debugging
-- Implement retry logic for network operations
-- Handle localStorage quota exceeded errors
-- Validate data before saving operations
-
-## Development Workflow
-
-### Build and Test
+## Development Commands
 
 ```bash
-# Start development server
-npm start
-
-# Development mode (same as start)
-npm run dev
-```
-
-### WebSocket Messaging
-
-The server provides a `POST /message` endpoint for real-time messaging:
-
-```bash
-curl -X POST http://localhost:3000/message \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Your message here"}'
-```
-
-This sends alerts to connected clients. Requires `ws` package:
-```bash
+# first-time setup
+git submodule update --init --recursive
 npm install
+
+# local dev (Vite on :3000, API/WebSocket server on :3001)
+npm run start:dev
+
+# production build
+npm run build
+
+# serve dist/ in production mode on :3000
+npm run start:prod
 ```
 
-## Template Documentation
+## Data and API Contracts
 
-For detailed information about:
-- Design System usage and components
-- CSS implementation guidelines
-- JavaScript API (HelpModal)
-- Component reference and examples
-- Customization options
+- Text source: client fetches `./text-to-input.txt`
+- Config source: client fetches `./config.json`
+- Stats write path:
+  - client POSTs plain text to `/save-stats`
+  - server writes payload to `client/stats.txt`
+- Broadcast messages:
+  - POST `/message` with JSON `{ "message": "..." }`
+  - server pushes to connected WebSocket clients on `/ws`
 
-See [BESPOKE-TEMPLATE.md](./BESPOKE-TEMPLATE.md).
+## Contribution Rules
 
-## Project Structure
+- Keep the app framework-free unless a migration is explicitly requested.
+- Preserve the `id` and class hooks used by `client/typing-simulator.js`.
+- If you change gameplay behavior, update both `README.md` and `client/help-content.html`.
+- If you change config keys or API payloads, update this file and README in the same change.
+- `client/app.css` contains shared shell/modal styles; keep `client/index.html` and `client/help-modal.js` aligned to that file.
 
-```
-client/
-  ├── index.html              # Main HTML template
-  ├── app.js                  # Application logic
-  ├── bespoke-template.css    # Template-specific styles
-  ├── help-modal.js           # Help modal system
-  ├── help-content-template.html  # Help content template
-  └── design-system/          # CodeSignal Design System
-      ├── colors/
-      ├── spacing/
-      ├── typography/
-      └── components/
-server.js                      # Development server
-```
+## Validation Checklist
 
-## Notes for AI Agents
-
-When working on applications built with this template:
-
-1. **Always reference BESPOKE-TEMPLATE.md** for template-specific
-   implementation details
-2. **Follow the conventions** listed above for file naming
-3. **Use Design System components** directly - see BESPOKE-TEMPLATE.md for
-   component classes and usage
-4. **Maintain consistency** with the template's structure and patterns
-5. **Keep guidelines up to date** by editing this AGENTS.md file as the codebase evolves
+- Run `npm run build` after JavaScript/CSS/HTML changes.
+- For UI/flow changes, manually verify:
+  - help modal opens from `#btn-help`
+  - active game mode starts from `client/config.json`
+  - completion and restart flows still work
+  - stats persist to `client/stats.txt` through `/save-stats`

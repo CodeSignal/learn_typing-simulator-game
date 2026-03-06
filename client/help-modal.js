@@ -1,11 +1,7 @@
 /**
- * HelpModal - A reusable, dependency-free help modal system for Bespoke applications
+ * HelpModal - dependency-free help modal used by the Typing Simulator.
  *
- * This modal system is designed to work with the CodeSignal Design System and provides
- * a consistent help experience across all embedded applications.
- *
- * Note: Currently uses temporary modal components from bespoke-template.css.
- * When modal components are added to the design system, this should be updated to use them.
+ * The modal markup uses shared shell classes defined in `client/app.css`.
  *
  * Usage:
  * HelpModal.init({
@@ -38,8 +34,7 @@ class HelpModal {
   }
 
   createModal() {
-    // Create modal container using temporary modal classes from bespoke-template.css
-    // TODO: Update to use design system modal classes when available
+    // Create modal container using shared classes from app.css
     this.modal = document.createElement('div');
     this.modal.className = 'modal';
     this.modal.innerHTML = `
