@@ -15,6 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Populate design system submodule
+        run: git submodule update --init
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
