@@ -1013,7 +1013,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--UI-Spacing-spacing-xs);
-  z-index: 10;
+  z-index: 2;
 }
 
 .bespoke .meteorite-circle {
@@ -1081,7 +1081,7 @@
   right: 0;
   width: 100%;
   height: clamp(190px, 38vh, 320px);
-  z-index: 6;
+  z-index: 1;
   pointer-events: none;
   opacity: 0.98;
 }
