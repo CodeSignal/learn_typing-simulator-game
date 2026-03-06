@@ -2227,8 +2227,6 @@
           currentGame.updateWordDisplay();
         }
       }
-
-      setStatus('Ready');
     } catch (error) {
       console.error('Error loading text:', error);
       if (textContainer) {
