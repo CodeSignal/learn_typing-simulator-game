@@ -896,7 +896,10 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #000232;
+  background:
+    radial-gradient(circle at 50% 82%, rgba(255, 169, 95, 0.24) 0%, rgba(255, 169, 95, 0.08) 18%, transparent 42%),
+    radial-gradient(circle at 18% 14%, rgba(132, 169, 255, 0.16) 0%, transparent 28%),
+    linear-gradient(180deg, #081126 0%, #0c1835 26%, #102454 54%, #050c1d 100%);
   overflow: hidden;
 }
 
@@ -906,6 +909,37 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
+}
+
+.bespoke .meteorite-rain-game::before,
+.bespoke .meteorite-rain-game::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.bespoke .meteorite-rain-game::before {
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 22%),
+    linear-gradient(180deg, rgba(5, 9, 20, 0) 0%, rgba(5, 9, 20, 0.12) 58%, rgba(2, 4, 12, 0.36) 100%);
+}
+
+.bespoke .meteorite-rain-game::after {
+  bottom: 18px;
+  height: 220px;
+  z-index: 4;
+  opacity: 0.72;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255, 176, 110, 0.32) 0%, rgba(255, 176, 110, 0.08) 30%, transparent 60%),
+    linear-gradient(180deg, rgba(108, 144, 228, 0) 0%, rgba(108, 144, 228, 0.08) 58%, rgba(255, 176, 110, 0.16) 100%);
+  filter: blur(30px);
+  animation: skyline-haze 18s ease-in-out infinite;
 }
 
 .bespoke .meteorite-rain-ui {
@@ -949,7 +983,7 @@
 
 .bespoke .meteorite-start-message {
   position: absolute;
-  top: 50%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 200;
@@ -970,6 +1004,7 @@
   width: 100%;
   min-height: 0;
   overflow: hidden;
+  z-index: 2;
 }
 
 .bespoke .meteorite {
@@ -1005,9 +1040,70 @@
   left: 0;
   right: 0;
   height: 20px;
-  background: #C4C4C4;
+  background:
+    linear-gradient(180deg, rgba(255, 206, 149, 0.3) 0%, rgba(255, 206, 149, 0) 25%),
+    linear-gradient(180deg, #24304d 0%, #0c1324 45%, #060913 100%);
   z-index: 5;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 224, 178, 0.38);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.38);
+}
+
+.bespoke .meteorite-ground::before,
+.bespoke .meteorite-ground::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.bespoke .meteorite-ground::before {
+  top: -10px;
+  height: 16px;
+  background:
+    radial-gradient(circle at 12% 100%, rgba(255, 194, 122, 0.3) 0%, transparent 55%),
+    radial-gradient(circle at 35% 100%, rgba(255, 194, 122, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 58% 100%, rgba(255, 194, 122, 0.24) 0%, transparent 50%),
+    radial-gradient(circle at 81% 100%, rgba(255, 194, 122, 0.22) 0%, transparent 52%);
+  opacity: 0.8;
+}
+
+.bespoke .meteorite-ground::after {
+  top: 4px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 12%, transparent 24%, rgba(255, 255, 255, 0.12) 48%, transparent 65%, rgba(255, 255, 255, 0.18) 84%, transparent 100%);
+}
+
+.bespoke .meteorite-skyline {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: clamp(190px, 38vh, 320px);
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.98;
+}
+
+.bespoke .meteorite-skyline .sg-window {
+  filter: url(#sg-window-glow);
+}
+
+.bespoke .meteorite-skyline .sg-window-soft {
+  opacity: 0.58;
+}
+
+.bespoke .meteorite-skyline .sg-window-bright {
+  opacity: 0.92;
+}
+
+.bespoke .meteorite-skyline .sg-window-cool {
+  opacity: 0.82;
+}
+
+.bespoke .meteorite-skyline .sg-beacon {
+  filter: url(#sg-beacon-glow);
 }
 
 .bespoke .meteorite-typing-input-container {
@@ -1124,6 +1220,84 @@
 
   .bespoke .keyboard-key.caps {
     min-width: 35px;
+  }
+
+  .bespoke .meteorite-skyline {
+    height: clamp(160px, 28vh, 220px);
+    opacity: 0.94;
+  }
+
+  .bespoke .meteorite-ground {
+    height: 18px;
+  }
+}
+
+/* Meteorite skyline atmosphere and light animations */
+@keyframes skyline-haze {
+  0%, 100% { opacity: 0.72; transform: translateY(0); }
+  50% { opacity: 0.82; transform: translateY(4px); }
+}
+
+@keyframes skyline-twinkle-a {
+  0%, 14%, 100% { opacity: 0.72; }
+  16% { opacity: 0.36; }
+  20% { opacity: 0.8; }
+  74% { opacity: 0.76; }
+  78% { opacity: 0.42; }
+  82% { opacity: 0.74; }
+}
+
+@keyframes skyline-twinkle-b {
+  0%, 32%, 100% { opacity: 0.66; }
+  36% { opacity: 0.3; }
+  40% { opacity: 0.72; }
+  62% { opacity: 0.6; }
+  66% { opacity: 0.24; }
+  69% { opacity: 0.68; }
+}
+
+@keyframes skyline-twinkle-c {
+  0%, 26%, 100% { opacity: 0.84; }
+  28% { opacity: 0.52; }
+  31% { opacity: 0.9; }
+  88% { opacity: 0.78; }
+  91% { opacity: 0.34; }
+  95% { opacity: 0.86; }
+}
+
+@keyframes skyline-twinkle-d {
+  0%, 48%, 100% { opacity: 0.58; }
+  52% { opacity: 0.16; }
+  56% { opacity: 0.66; }
+  72% { opacity: 0.6; }
+  76% { opacity: 0.28; }
+  80% { opacity: 0.62; }
+}
+
+.sg-twinkle-a { animation: skyline-twinkle-a 10s linear infinite; }
+.sg-twinkle-b { animation: skyline-twinkle-b 12s linear infinite 1.4s; }
+.sg-twinkle-c { animation: skyline-twinkle-c 14s linear infinite 3s; }
+.sg-twinkle-d { animation: skyline-twinkle-d 9s linear infinite 2.4s; }
+
+@keyframes skyline-beacon {
+  0%, 42%, 58%, 100% { opacity: 0.95; }
+  50% { opacity: 0.18; }
+}
+
+.sg-beacon-a { animation: skyline-beacon 2.4s ease-in-out infinite; }
+.sg-beacon-b { animation: skyline-beacon 2.8s ease-in-out infinite 0.8s; }
+.sg-beacon-c { animation: skyline-beacon 3.1s ease-in-out infinite 1.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bespoke .meteorite-rain-game::after,
+  .sg-twinkle-a,
+  .sg-twinkle-b,
+  .sg-twinkle-c,
+  .sg-twinkle-d,
+  .sg-beacon-a,
+  .sg-beacon-b,
+  .sg-beacon-c {
+    animation: none !important;
   }
 }
 

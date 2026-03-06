@@ -104,6 +104,219 @@
             <div class="meteorite-rain-play-area" id="meteorite-play-area">
               <!-- Meteorites will be dynamically added here -->
             </div>
+            <svg class="meteorite-skyline" xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 1200 260" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="sg-far-building" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#203255"/>
+                  <stop offset="100%" stop-color="#111c34"/>
+                </linearGradient>
+                <linearGradient id="sg-mid-building" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#243756"/>
+                  <stop offset="100%" stop-color="#13213a"/>
+                </linearGradient>
+                <linearGradient id="sg-foreground-building" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1d273b"/>
+                  <stop offset="62%" stop-color="#101726"/>
+                  <stop offset="100%" stop-color="#070c14"/>
+                </linearGradient>
+                <linearGradient id="sg-glass-building" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2f4468"/>
+                  <stop offset="45%" stop-color="#18253d"/>
+                  <stop offset="100%" stop-color="#0c1422"/>
+                </linearGradient>
+                <linearGradient id="sg-atmosphere" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#081126" stop-opacity="0"/>
+                  <stop offset="48%" stop-color="#0d1c3d" stop-opacity="0.1"/>
+                  <stop offset="100%" stop-color="#02050d" stop-opacity="0.34"/>
+                </linearGradient>
+                <linearGradient id="sg-depth-haze" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#8cb1ff" stop-opacity="0"/>
+                  <stop offset="55%" stop-color="#8cb1ff" stop-opacity="0.06"/>
+                  <stop offset="100%" stop-color="#ffd29a" stop-opacity="0.16"/>
+                </linearGradient>
+                <radialGradient id="sg-horizon-amber" cx="50%" cy="100%" r="60%">
+                  <stop offset="0%" stop-color="#ffb46a" stop-opacity="0.28"/>
+                  <stop offset="45%" stop-color="#ff9f52" stop-opacity="0.1"/>
+                  <stop offset="100%" stop-color="#ff9f52" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="sg-horizon-blue" cx="50%" cy="90%" r="70%">
+                  <stop offset="0%" stop-color="#74a3ff" stop-opacity="0.16"/>
+                  <stop offset="100%" stop-color="#74a3ff" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="sg-front-highlight" cx="50%" cy="0%" r="110%">
+                  <stop offset="0%" stop-color="#4f6a98" stop-opacity="0.4"/>
+                  <stop offset="35%" stop-color="#253756" stop-opacity="0.08"/>
+                  <stop offset="100%" stop-color="#253756" stop-opacity="0"/>
+                </radialGradient>
+
+                <pattern id="sg-far-windows" patternUnits="userSpaceOnUse" width="20" height="18">
+                  <rect x="3" y="4" width="3" height="2" fill="#ffdca8" opacity="0.34"/>
+                  <rect x="11" y="4" width="2" height="2" fill="#8dc9ff" opacity="0.24"/>
+                  <rect x="3" y="11" width="3" height="2" fill="#ffdca8" opacity="0.24"/>
+                  <rect x="11" y="11" width="2" height="2" fill="#ffdca8" opacity="0.18"/>
+                </pattern>
+                <pattern id="sg-mid-windows" patternUnits="userSpaceOnUse" width="24" height="20">
+                  <rect x="4" y="4" width="5" height="3" fill="#ffd596" opacity="0.76"/>
+                  <rect x="14" y="4" width="4" height="3" fill="#8fd4ff" opacity="0.56"/>
+                  <rect x="4" y="12" width="5" height="3" fill="#ffd596" opacity="0.62"/>
+                  <rect x="14" y="12" width="4" height="3" fill="#ffd596" opacity="0.42"/>
+                </pattern>
+                <pattern id="sg-front-windows" patternUnits="userSpaceOnUse" width="26" height="22">
+                  <rect x="4" y="4" width="6" height="4" fill="#ffd189" opacity="0.9"/>
+                  <rect x="15" y="4" width="5" height="4" fill="#8fd4ff" opacity="0.72"/>
+                  <rect x="4" y="13" width="6" height="4" fill="#ffd189" opacity="0.72"/>
+                  <rect x="15" y="13" width="5" height="4" fill="#ffd189" opacity="0.54"/>
+                </pattern>
+                <pattern id="sg-glass-windows" patternUnits="userSpaceOnUse" width="22" height="18">
+                  <rect x="4" y="3" width="4" height="12" fill="#7fd3ff" opacity="0.55"/>
+                  <rect x="11" y="3" width="3" height="12" fill="#c8f0ff" opacity="0.42"/>
+                </pattern>
+
+                <filter id="sg-blur-far" x="-5%" y="-5%" width="110%" height="110%">
+                  <feGaussianBlur stdDeviation="1.8"/>
+                </filter>
+                <filter id="sg-blur-mid" x="-5%" y="-5%" width="110%" height="110%">
+                  <feGaussianBlur stdDeviation="0.7"/>
+                </filter>
+                <filter id="sg-window-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="0.75" result="glow"/>
+                  <feMerge>
+                    <feMergeNode in="glow"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                <filter id="sg-beacon-glow" x="-300%" y="-300%" width="700%" height="700%">
+                  <feGaussianBlur stdDeviation="2.4" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <ellipse cx="600" cy="252" rx="440" ry="72" fill="url(#sg-horizon-amber)"/>
+              <ellipse cx="610" cy="214" rx="560" ry="96" fill="url(#sg-horizon-blue)"/>
+              <rect x="0" y="0" width="1200" height="260" fill="url(#sg-atmosphere)"/>
+
+              <g filter="url(#sg-blur-far)" opacity="0.82">
+                <rect x="-20" y="172" width="96" height="88" fill="url(#sg-far-building)"/>
+                <rect x="58" y="146" width="52" height="114" fill="url(#sg-far-building)"/>
+                <rect x="114" y="124" width="42" height="136" fill="url(#sg-far-building)"/>
+                <rect x="156" y="152" width="84" height="108" fill="url(#sg-far-building)"/>
+                <rect x="240" y="112" width="56" height="148" fill="url(#sg-far-building)"/>
+                <rect x="300" y="138" width="88" height="122" fill="url(#sg-far-building)"/>
+                <rect x="392" y="118" width="68" height="142" fill="url(#sg-far-building)"/>
+                <rect x="462" y="150" width="80" height="110" fill="url(#sg-far-building)"/>
+                <rect x="542" y="116" width="54" height="144" fill="url(#sg-far-building)"/>
+                <rect x="598" y="146" width="78" height="114" fill="url(#sg-far-building)"/>
+                <rect x="678" y="126" width="68" height="134" fill="url(#sg-far-building)"/>
+                <rect x="748" y="154" width="90" height="106" fill="url(#sg-far-building)"/>
+                <rect x="842" y="118" width="72" height="142" fill="url(#sg-far-building)"/>
+                <rect x="916" y="138" width="88" height="122" fill="url(#sg-far-building)"/>
+                <rect x="1006" y="112" width="58" height="148" fill="url(#sg-far-building)"/>
+                <rect x="1066" y="152" width="72" height="108" fill="url(#sg-far-building)"/>
+                <rect x="1138" y="130" width="92" height="130" fill="url(#sg-far-building)"/>
+
+                <rect class="sg-window sg-window-soft sg-twinkle-a" x="-4" y="186" width="56" height="58" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-b" x="67" y="158" width="34" height="84" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-c" x="122" y="136" width="24" height="98" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-d" x="169" y="164" width="58" height="72" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-a" x="249" y="124" width="38" height="104" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-b" x="313" y="150" width="62" height="82" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-c" x="404" y="132" width="44" height="100" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-d" x="474" y="162" width="54" height="70" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-a" x="550" y="128" width="38" height="102" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-b" x="610" y="160" width="54" height="72" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-c" x="688" y="140" width="48" height="92" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-d" x="762" y="166" width="62" height="68" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-a" x="852" y="132" width="52" height="100" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-b" x="930" y="150" width="60" height="80" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-c" x="1016" y="128" width="38" height="102" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-d" x="1079" y="164" width="46" height="70" fill="url(#sg-far-windows)"/>
+                <rect class="sg-window sg-window-soft sg-twinkle-a" x="1150" y="146" width="64" height="82" fill="url(#sg-far-windows)"/>
+              </g>
+
+              <rect x="0" y="112" width="1200" height="148" fill="url(#sg-depth-haze)" opacity="0.72"/>
+
+              <g opacity="0.94">
+                <path d="M0 260V166h76v-20h26v20h34V260Z" fill="url(#sg-mid-building)"/>
+                <path d="M112 260V108h70v-16h54v16h14V260Z" fill="url(#sg-mid-building)"/>
+                <rect x="244" y="130" width="56" height="130" fill="url(#sg-mid-building)"/>
+                <path d="M314 260V80h82v-14h24v14h18V260Z" fill="url(#sg-glass-building)"/>
+                <rect x="428" y="146" width="94" height="114" fill="url(#sg-mid-building)"/>
+                <path d="M534 260V92h70v-18h42v18h18V260Z" fill="url(#sg-mid-building)"/>
+                <path d="M664 260V62h84v-14h46v14h14V260Z" fill="url(#sg-glass-building)"/>
+                <rect x="808" y="122" width="72" height="138" fill="url(#sg-mid-building)"/>
+                <path d="M894 260V90h66v-16h38v16h24V260Z" fill="url(#sg-mid-building)"/>
+                <rect x="1024" y="138" width="84" height="122" fill="url(#sg-mid-building)"/>
+                <path d="M1116 260V78h54v-20h20v20h10V260Z" fill="url(#sg-mid-building)"/>
+
+                <rect class="sg-window sg-twinkle-b" x="14" y="178" width="78" height="68" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-twinkle-c" x="128" y="120" width="96" height="118" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-window-cool sg-twinkle-d" x="255" y="142" width="34" height="96" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-window-cool sg-twinkle-a" x="328" y="94" width="64" height="144" fill="url(#sg-glass-windows)"/>
+                <rect class="sg-window sg-twinkle-b" x="442" y="158" width="66" height="78" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-window-cool sg-twinkle-d" x="678" y="76" width="102" height="156" fill="url(#sg-glass-windows)"/>
+                <rect class="sg-window sg-twinkle-a" x="820" y="136" width="48" height="104" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-twinkle-b" x="908" y="104" width="76" height="132" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-twinkle-c" x="1038" y="150" width="56" height="86" fill="url(#sg-mid-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-d" x="1128" y="92" width="54" height="144" fill="url(#sg-mid-windows)"/>
+
+                <rect x="352" y="138" width="44" height="12" fill="#08111f" opacity="0.38"/>
+                <rect x="706" y="140" width="42" height="10" fill="#08111f" opacity="0.44"/>
+                <rect x="940" y="158" width="34" height="12" fill="#08111f" opacity="0.42"/>
+              </g>
+
+              <g>
+                <rect x="0" y="176" width="86" height="84" fill="url(#sg-foreground-building)"/>
+                <path d="M74 260V124h88v-18h64v18h10V260Z" fill="url(#sg-foreground-building)"/>
+                <rect x="226" y="150" width="70" height="110" fill="url(#sg-foreground-building)"/>
+                <path d="M300 260V98h48v-18h12V56h12v24h10V98h8V260Z" fill="url(#sg-foreground-building)"/>
+                <rect x="382" y="156" width="88" height="104" fill="url(#sg-foreground-building)"/>
+                <path d="M468 260V110h102v-18h78v18h8V260Z" fill="url(#sg-foreground-building)"/>
+                <path d="M544 260V36h96v-10h18V12h8v14h10v10h10V260Z" fill="url(#sg-glass-building)"/>
+                <rect x="650" y="144" width="82" height="116" fill="url(#sg-foreground-building)"/>
+                <path d="M736 260V76h62v-10h12V48h10v18h10v10h12V260Z" fill="url(#sg-glass-building)"/>
+                <path d="M844 260V102h70v-16h22v16h6V260Z" fill="url(#sg-foreground-building)"/>
+                <rect x="942" y="152" width="82" height="108" fill="url(#sg-foreground-building)"/>
+                <path d="M1024 260V122h94v-16h70v16h8V260Z" fill="url(#sg-foreground-building)"/>
+                <path d="M1086 260V58h86v-10h14V34h10v14h8v10h10V260Z" fill="url(#sg-foreground-building)"/>
+                <rect x="1176" y="174" width="40" height="86" fill="url(#sg-foreground-building)"/>
+
+                <rect x="545" y="26" width="110" height="234" fill="url(#sg-front-highlight)" opacity="0.55"/>
+                <rect x="742" y="76" width="96" height="184" fill="url(#sg-front-highlight)" opacity="0.42"/>
+                <rect x="1092" y="58" width="74" height="202" fill="url(#sg-front-highlight)" opacity="0.38"/>
+
+                <rect class="sg-window sg-window-bright sg-twinkle-a" x="12" y="188" width="58" height="58" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-b" x="92" y="136" width="120" height="112" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-twinkle-c" x="239" y="162" width="44" height="82" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-d" x="312" y="114" width="58" height="128" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-twinkle-a" x="396" y="168" width="60" height="72" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-b" x="484" y="122" width="46" height="124" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-cool sg-window-bright sg-twinkle-c" x="558" y="52" width="84" height="176" fill="url(#sg-glass-windows)"/>
+                <rect class="sg-window sg-twinkle-c" x="665" y="156" width="52" height="84" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-cool sg-window-bright sg-twinkle-d" x="748" y="90" width="78" height="152" fill="url(#sg-glass-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-a" x="856" y="116" width="72" height="126" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-twinkle-b" x="956" y="166" width="54" height="74" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-c" x="1038" y="136" width="144" height="112" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-window-bright sg-twinkle-d" x="1098" y="74" width="62" height="166" fill="url(#sg-front-windows)"/>
+                <rect class="sg-window sg-twinkle-a" x="1184" y="184" width="24" height="54" fill="url(#sg-front-windows)"/>
+
+                <rect x="489" y="168" width="36" height="12" fill="#05080f" opacity="0.46"/>
+                <rect x="489" y="202" width="30" height="10" fill="#05080f" opacity="0.42"/>
+                <rect x="780" y="150" width="40" height="10" fill="#05080f" opacity="0.36"/>
+                <rect x="1049" y="178" width="76" height="12" fill="#05080f" opacity="0.44"/>
+                <rect x="1108" y="120" width="32" height="10" fill="#05080f" opacity="0.4"/>
+              </g>
+
+              <g>
+                <circle class="sg-beacon sg-beacon-a" cx="366" cy="56" r="2" fill="#ff6868"/>
+                <circle class="sg-beacon sg-beacon-b" cx="662" cy="10" r="2.4" fill="#ff746f"/>
+                <circle class="sg-beacon sg-beacon-c" cx="831" cy="48" r="2" fill="#ff746f"/>
+                <circle class="sg-beacon sg-beacon-b" cx="1191" cy="34" r="2" fill="#ff746f"/>
+              </g>
+            </svg>
             <div class="meteorite-ground" id="meteorite-ground"></div>
             <div class="meteorite-typing-input-container">
               <input
