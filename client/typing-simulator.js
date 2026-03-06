@@ -37,10 +37,6 @@
   let gameUpdateInterval = null;
   let gameAnimationFrame = null;
 
-  function setStatus(msg) {
-    // Status element removed - function kept for compatibility but does nothing
-  }
-
   // Load configuration
   async function loadConfig() {
     try {
@@ -1014,7 +1010,6 @@
 
   async function loadText() {
     try {
-      setStatus('Loading...');
       const response = await fetch('./text-to-input.txt');
       if (!response.ok) {
         throw new Error('Failed to load text file');
@@ -1032,10 +1027,8 @@
       }
 
       renderText();
-      setStatus('Ready');
     } catch (error) {
       console.error('Error loading text:', error);
-      setStatus('Failed to load data');
       if (textContainer) {
         textContainer.innerHTML = '<p>Error: Could not load text file.</p>';
       }
@@ -1521,7 +1514,6 @@
     }
 
     renderText();
-    setStatus('Ready');
 
     // Focus the appropriate input after a short delay
     setTimeout(() => {

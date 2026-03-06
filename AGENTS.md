@@ -35,18 +35,6 @@ This template provides:
 
 ## Key Conventions
 
-### Status Messages
-
-Use these exact status messages for consistency:
-
-- "Ready" - Application loaded successfully
-- "Loading..." - Data is being loaded
-- "Saving..." - Data is being saved
-- "Changes saved" - Auto-save completed successfully
-- "Save failed (will retry)" - Server save failed, will retry
-- "Failed to load data" - Data loading failed
-- "Auto-save initialized" - Auto-save system started
-
 ### File Naming
 
 - CSS files: kebab-case (e.g., `my-app.css`)
@@ -95,7 +83,7 @@ npm install
 For detailed information about:
 - Design System usage and components
 - CSS implementation guidelines
-- JavaScript API (HelpModal, status management)
+- JavaScript API (HelpModal)
 - Component reference and examples
 - Customization options
 
@@ -124,7 +112,7 @@ When working on applications built with this template:
 
 1. **Always reference BESPOKE-TEMPLATE.md** for template-specific
    implementation details
-2. **Follow the conventions** listed above for status messages and file naming
+2. **Follow the conventions** listed above for file naming
 3. **Use Design System components** directly - see BESPOKE-TEMPLATE.md for
    component classes and usage
 4. **Maintain consistency** with the template's structure and patterns

@@ -52,11 +52,6 @@ html, body {
   color: var(--Colors-Text-Body-Strongest);
 }
 
-.bespoke .header .status {
-  font-size: var(--Fonts-Body-Default-xs);
-  color: var(--Colors-Text-Body-Medium);
-}
-
 /* Main Layout */
 .bespoke .main-layout {
   display: grid;
@@ -459,10 +454,6 @@ html, body {
 
   .bespoke .header h1 {
     font-size: var(--Fonts-Body-Default-md);
-  }
-
-  .bespoke .header .status {
-    font-size: var(--Fonts-Body-Default-xxs);
   }
 
   .bespoke .main-layout {

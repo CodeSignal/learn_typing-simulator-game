@@ -2,10 +2,6 @@
 (function() {
   let websocket = null;
 
-  function setStatus(msg) {
-    // Status element removed - function kept for compatibility but does nothing
-  }
-
   // Initialize WebSocket connection
   function initializeWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -17,7 +13,6 @@
 
       websocket.onopen = function(event) {
         console.log('WebSocket connected');
-        setStatus('Ready (WebSocket connected)');
       };
 
       websocket.onmessage = function(event) {
@@ -33,7 +28,6 @@
 
       websocket.onclose = function(event) {
         console.log('WebSocket disconnected');
-        setStatus('Ready (WebSocket disconnected)');
 
         // Attempt to reconnect after 3 seconds
         setTimeout(() => {
@@ -44,12 +38,10 @@
 
       websocket.onerror = function(error) {
         console.error('WebSocket error:', error);
-        setStatus('Ready (WebSocket error)');
       };
 
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
-      setStatus('Ready (WebSocket unavailable)');
     }
   }
 
@@ -65,8 +57,6 @@
         content: helpContent,
         theme: 'auto'
       });
-
-      setStatus('Ready');
     } catch (error) {
       console.error('Failed to load help content:', error);
       // Fallback to placeholder content
@@ -75,7 +65,6 @@
         content: '<p>Help content could not be loaded. Please check that help-content.html exists.</p>',
         theme: 'auto'
       });
-      setStatus('Ready (help content unavailable)');
     }
   }
 

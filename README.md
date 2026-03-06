@@ -14,7 +14,7 @@ This template uses the CodeSignal Design System located in `client/design-system
 ### 2. `client/bespoke-template.css`
 Template-specific CSS providing:
 - Layout components (header, sidebar, main-layout)
-- Utility classes (row, spacer, status)
+- Utility classes (row, spacer)
 - Temporary components (modals, form elements) - will be replaced when design system adds them
 
 ### 3. `client/index.html`
