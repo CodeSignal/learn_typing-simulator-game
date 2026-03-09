@@ -44,7 +44,7 @@ Runtime behavior is controlled by `client/config.json`:
 - `client/typing-simulator.js`: core gameplay and stats logic
 - `client/typing-simulator.css`: gameplay styles
 - `client/app.css`: shared shell/layout styles
-- `client/app.js`: help modal bootstrap
+- `client/help.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal used for help
 - `client/help-content.html`: help text shown in the modal
 - `client/text-to-input.txt`: source text used for typing

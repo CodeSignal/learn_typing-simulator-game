@@ -1,5 +1,5 @@
 {
-  "gameType": "meteoriteRain",
+  "gameType": "classic",
   "keyboard": true,
   "availableKeys": [],
   "showStats": true,

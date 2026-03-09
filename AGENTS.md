@@ -9,13 +9,27 @@ Supported game modes are configured in `client/config.json`:
 - `classic`: standard line-by-line typing flow
 - `racing`: player car vs opponents progressing across the typed text
 - `meteoriteRain`: type falling words before they hit the ground
+- `towerDefense`: type prompted words to defeat enemies before they reach the castle
 
 ## Runtime Architecture
 
-- `client/index.html`: single-page shell with all mode containers and controls
-- `client/typing-simulator.js`: game logic, input handling, rendering, stats
+- `client/index.html`: single-page shell with containers and controls for classic, racing, meteorite rain, and tower defense modes
+- `client/typing-simulator.js`: entry point and initialization orchestrator; wires DOM, listeners, focus management, config/text loading, and mode bootstrapping
+- `client/state.js`: shared mutable state singleton used across all client modules
+- `client/config.js`: loads and normalizes runtime configuration from `client/config.json`
+- `client/text.js`: loads `client/text-to-input.txt`, initializes character state, renders text, and triggers completion for text-based modes
+- `client/input.js`: central input and keydown handling with per-mode branches
+- `client/keyboard.js`: visual keyboard rendering, key availability checks, and key highlighting
+- `client/stats.js`: real-time/final stats calculation, stats parsing, and `/save-stats` persistence
+- `client/completion.js`: completion screen and stats dashboard flow
+- `client/restart.js`: reset and restart flow for all game modes
+- `client/game-manager.js`: game factory/lifecycle coordinator that instantiates the active mode and starts its loops
+- `client/games/classic-game.js`: classic mode adapter
+- `client/games/racing-game.js`: racing mode behavior and animation
+- `client/games/meteorite-rain-game.js`: meteorite rain gameplay loop
+- `client/games/tower-defense-game.js`: tower defense gameplay loop and UI updates
 - `client/typing-simulator.css`: simulator visuals for all game modes
-- `client/app.js`: help modal bootstrap
+- `client/help.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal component used by help modal flow
 - `client/help-content.html`: help guide loaded into the modal at runtime
 - `client/config.json`: runtime feature toggles and mode parameters
@@ -51,8 +65,11 @@ npm run start:prod
 ## Contribution Rules
 
 - Keep the app framework-free unless a migration is explicitly requested.
-- Preserve the `id` and class hooks used by `client/typing-simulator.js`.
+- Keep cross-cutting logic in the shared modules above; do NOT dump new behavior into `client/typing-simulator.js` unless it is truly initialization/orchestration code.
+- Keep mode-specific gameplay inside `client/games/` and shared behavior in the top-level client modules.
+- Preserve the `id` and class hooks used across `client/index.html`, `client/typing-simulator.js`, `client/help.js`, and the game modules.
 - If you change gameplay behavior, update both `README.md` and `client/help-content.html`.
+- If you add, remove, or rename client modules, update the runtime architecture sections in both this file and `README.md` in the same change.
 - If you change config keys or API payloads, update this file and README in the same change.
 - `client/app.css` contains shared shell styles; keep `client/index.html` and the design-system asset includes aligned to that file.
 
@@ -61,6 +78,7 @@ npm run start:prod
 - Run `npm run build` after JavaScript/CSS/HTML changes.
 - For UI/flow changes, manually verify:
   - help modal opens from `#btn-help`
-  - active game mode starts from `client/config.json`
+  - active game mode from `client/config.json` initializes the correct container and input flow
   - completion and restart flows still work
+  - affected game loops still start/reset correctly (`racing`, `meteoriteRain`, `towerDefense`)
   - stats persist to `client/stats.txt` through `/save-stats`
