@@ -2925,8 +2925,7 @@
 
     // Calculate words per minute
     // Count words by splitting on whitespace
-    const wordsTyped = originalText.trim().split(/\s+/).filter(word => word.length > 0).length;
-    const wpm = totalTimeMinutes > 0 ? wordsTyped / totalTimeMinutes : 0;
+    const wpm = totalTimeMinutes > 0 ? (charsTyped / 5) / totalTimeMinutes : 0;
 
     return {
       speed: wpm,
