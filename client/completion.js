@@ -205,12 +205,18 @@ export function showCompletionScreen() {
     const endTime = Date.now();
     const totalTimeSeconds = gameStartTime ? (endTime - gameStartTime) / 1000 : 0;
 
+    const score = state.currentGame.getScore ? state.currentGame.getScore() : 0;
+    const pointsPerChar = state.currentGame.pointsPerChar ?? state.config.meteoriteRain?.pointsPerChar ?? 100;
+    const charsTyped = pointsPerChar > 0 ? score / pointsPerChar : 0;
+    const totalTimeMinutes = totalTimeSeconds / 60;
+    const wpm = totalTimeMinutes > 0 ? (charsTyped / 5) / totalTimeMinutes : 0;
+
     stats = {
       totalErrors: 0,
       errorsLeft: 0,
       totalTime: totalTimeSeconds,
-      accuracy: 100, // Not applicable for word-based game, but set to 100
-      speed: 0 // Not applicable for word-based game
+      accuracy: 100,
+      speed: wpm  // was: 0
     };
     console.log('Created stats for meteorite rain game:', stats);
   }
