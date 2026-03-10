@@ -1086,6 +1086,12 @@
   opacity: 0.98;
 }
 
+.bespoke .meteorite-skyline > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .bespoke .meteorite-skyline .sg-window {
   filter: url(#sg-window-glow);
 }

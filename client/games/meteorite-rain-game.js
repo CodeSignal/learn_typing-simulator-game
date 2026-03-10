@@ -1,10 +1,13 @@
 import { state } from '../state.js';
 import { showCompletionScreen } from '../completion.js';
 
+const meteoriteSkylineUrl = new URL('../assets/meteorite-skyline.svg', import.meta.url);
+
 export class MeteoriteRainGame {
     constructor() {
       this.container = document.getElementById('meteorite-rain-container');
       this.playArea = document.getElementById('meteorite-play-area');
+      this.skylineContainer = document.getElementById('meteorite-skyline');
       this.scoreElement = document.getElementById('meteorite-score');
       this.livesElement = document.getElementById('meteorite-lives');
       this.typingInput = document.getElementById('meteorite-typing-input');
@@ -26,6 +29,7 @@ export class MeteoriteRainGame {
       this.spawnIntervalId = null;
       this.animationFrame = null;
       this.startKeyListener = null;
+      this.skylineLoadPromise = null;
 
       // Difficulty settings
       const difficultyConfig = state.config.meteoriteRain?.difficulty || {};
@@ -50,8 +54,45 @@ export class MeteoriteRainGame {
         racingContainer.style.display = 'none';
       }
 
+      void this.initializeSkyline();
+
       // Reset game state
       this.reset();
+    }
+
+    async initializeSkyline() {
+      if (!this.skylineContainer) {
+        return;
+      }
+
+      if (this.skylineContainer.dataset.loaded === 'true') {
+        return;
+      }
+
+      if (this.skylineLoadPromise) {
+        return this.skylineLoadPromise;
+      }
+
+      this.skylineLoadPromise = fetch(meteoriteSkylineUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to load meteorite skyline: ${response.status}`);
+          }
+
+          return response.text();
+        })
+        .then(svgMarkup => {
+          this.skylineContainer.innerHTML = svgMarkup;
+          this.skylineContainer.dataset.loaded = 'true';
+        })
+        .catch(error => {
+          console.error('Failed to initialize meteorite skyline:', error);
+        })
+        .finally(() => {
+          this.skylineLoadPromise = null;
+        });
+
+      return this.skylineLoadPromise;
     }
 
     extractWords() {
