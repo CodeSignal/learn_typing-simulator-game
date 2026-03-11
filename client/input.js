@@ -192,11 +192,6 @@ export function handleInput(e) {
 
   renderText();
   updateRealtimeStats();
-
-  // Update word display for tower defense
-  if (state.config.gameType === 'towerDefense' && state.currentGame) {
-    state.currentGame.updateWordDisplay();
-  }
 }
 
 export function handleKeyDown(e) {
@@ -263,20 +258,19 @@ export function handleKeyDown(e) {
         return;
       }
 
-      const inputElement = document.getElementById('meteorite-typing-input');
-      if (inputElement) {
-        const wordToCheck = inputElement.value.trim();
+      if (state.meteoriteInput) {
+        const wordToCheck = state.meteoriteInput.value.trim();
         if (wordToCheck.length > 0) {
           // Check if word matches a meteorite
           if (state.currentGame.checkWordMatch && state.currentGame.checkWordMatch(wordToCheck)) {
             // Word matched! Clear input
-            inputElement.value = '';
+            state.meteoriteInput.value = '';
             if (state.currentGame.setTypedWord) {
               state.currentGame.setTypedWord('');
             }
           } else {
             // Word didn't match, clear input anyway (player can try again)
-            inputElement.value = '';
+            state.meteoriteInput.value = '';
             if (state.currentGame.setTypedWord) {
               state.currentGame.setTypedWord('');
             }

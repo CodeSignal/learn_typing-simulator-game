@@ -7,6 +7,37 @@ import { ClassicGame } from './games/classic-game.js';
 import { MeteoriteRainGame } from './games/meteorite-rain-game.js';
 import { TowerDefenseGame } from './games/tower-defense-game.js';
 
+const GAME_CONTAINERS = [
+  'classic-typing-container',
+  'racing-track-container',
+  'meteorite-rain-container',
+  'tower-defense-container',
+];
+
+export function hideAllGameContainers() {
+  for (const id of GAME_CONTAINERS) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+}
+
+export function showGameContainer(gameType) {
+  hideAllGameContainers();
+  if (gameType === 'racing') {
+    const el = document.getElementById('racing-track-container');
+    if (el) el.style.display = 'block';
+  } else if (gameType === 'meteoriteRain') {
+    const el = document.getElementById('meteorite-rain-container');
+    if (el) el.style.display = 'flex';
+  } else if (gameType === 'towerDefense') {
+    const el = document.getElementById('tower-defense-container');
+    if (el) el.style.display = 'flex';
+  } else {
+    const el = document.getElementById('classic-typing-container');
+    if (el) el.style.display = 'flex';
+  }
+}
+
 export function initializeGame() {
   // Clean up previous game
   if (state.currentGame) {

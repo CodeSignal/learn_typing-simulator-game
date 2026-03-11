@@ -38,4 +38,8 @@ export const state = {
   currentGame: null,
   gameUpdateInterval: null,
   gameAnimationFrame: null,
+
+  // Cached DOM references
+  meteoriteInput: null,
+  keyboardStatsWrapper: null,
 };

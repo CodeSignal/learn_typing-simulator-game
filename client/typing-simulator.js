@@ -21,6 +21,7 @@ async function initialize() {
   state.startOverButton = document.getElementById('btn-start-over');
   state.statsStartOverButton = document.getElementById('btn-stats-start-over');
   state.realtimeStatsContainer = document.getElementById('realtime-stats-container');
+  state.keyboardStatsWrapper = document.querySelector('.keyboard-stats-wrapper');
 
   if (!state.hiddenInput) {
     console.error('Required elements not found');
@@ -62,10 +63,10 @@ async function initialize() {
   }
 
   // Set up event listeners for meteorite rain input
-  const meteoriteInput = document.getElementById('meteorite-typing-input');
-  if (meteoriteInput) {
-    meteoriteInput.addEventListener('input', handleInput);
-    meteoriteInput.addEventListener('keydown', handleKeyDown);
+  state.meteoriteInput = document.getElementById('meteorite-typing-input');
+  if (state.meteoriteInput) {
+    state.meteoriteInput.addEventListener('input', handleInput);
+    state.meteoriteInput.addEventListener('keydown', handleKeyDown);
   }
 
   if (state.restartButton) {
@@ -110,9 +111,8 @@ async function initialize() {
     meteoritePlayArea.addEventListener('click', () => {
       const isCompletionVisible = state.completionScreen && state.completionScreen.style.display === 'flex';
       const isStatsVisible = state.statsDashboard && state.statsDashboard.style.display === 'flex';
-      const meteoriteInput = document.getElementById('meteorite-typing-input');
-      if (meteoriteInput && !isCompletionVisible && !isStatsVisible) {
-        meteoriteInput.focus();
+      if (state.meteoriteInput && !isCompletionVisible && !isStatsVisible) {
+        state.meteoriteInput.focus();
       }
     });
   }
@@ -124,14 +124,6 @@ async function initialize() {
   if (state.config.gameType === 'meteoriteRain' && state.currentGame) {
     if (state.currentGame.extractWords) {
       state.currentGame.extractWords();
-    }
-  }
-
-  // Extract words for tower defense game after text is loaded
-  if (state.config.gameType === 'towerDefense' && state.currentGame) {
-    if (state.currentGame.extractWords) {
-      state.currentGame.extractWords();
-      state.currentGame.updateWordDisplay();
     }
   }
 
@@ -155,9 +147,8 @@ async function initialize() {
     if (isCompletionVisible || isStatsVisible) return;
 
     if (state.config.gameType === 'meteoriteRain') {
-      const meteoriteInput = document.getElementById('meteorite-typing-input');
-      if (meteoriteInput) {
-        meteoriteInput.focus();
+      if (state.meteoriteInput) {
+        state.meteoriteInput.focus();
       }
     } else if (state.hiddenInput) {
       state.hiddenInput.focus();

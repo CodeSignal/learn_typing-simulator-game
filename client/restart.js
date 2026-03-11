@@ -3,6 +3,8 @@
 import { state } from './state.js';
 import { updateRealtimeStats } from './stats.js';
 import { renderText } from './text.js';
+import { clearKeyHighlight } from './keyboard.js';
+import { hideAllGameContainers, showGameContainer } from './game-manager.js';
 
 export function restart() {
   state.typedText = '';
@@ -28,14 +30,7 @@ export function restart() {
   updateRealtimeStats();
 
   // Clear keyboard highlights
-  if (state.activeKeyElement) {
-    state.activeKeyElement.classList.remove('active', 'active-error');
-    state.activeKeyElement = null;
-  }
-  if (state.activeKeyTimeout) {
-    clearTimeout(state.activeKeyTimeout);
-    state.activeKeyTimeout = null;
-  }
+  clearKeyHighlight();
 
   // Reset game
   if (state.currentGame && state.currentGame.reset) {
@@ -43,93 +38,13 @@ export function restart() {
   }
 
   // Show appropriate container and hide completion screen and stats dashboard
-  const isRacing = state.config.gameType === 'racing';
   const isMeteoriteRain = state.config.gameType === 'meteoriteRain';
-  const isTowerDefense = state.config.gameType === 'towerDefense';
 
-  if (isRacing) {
-    const racingContainer = document.getElementById('racing-track-container');
-    if (racingContainer) {
-      racingContainer.style.display = 'block';
-    }
-    const classicContainer = document.getElementById('classic-typing-container');
-    if (classicContainer) {
-      classicContainer.style.display = 'none';
-    }
-    const meteoriteContainer = document.getElementById('meteorite-rain-container');
-    if (meteoriteContainer) {
-      meteoriteContainer.style.display = 'none';
-    }
-    const towerDefenseContainer = document.getElementById('tower-defense-container');
-    if (towerDefenseContainer) {
-      towerDefenseContainer.style.display = 'none';
-    }
-  } else if (isMeteoriteRain) {
-    const meteoriteContainer = document.getElementById('meteorite-rain-container');
-    if (meteoriteContainer) {
-      meteoriteContainer.style.display = 'flex';
-    }
-    const classicContainer = document.getElementById('classic-typing-container');
-    if (classicContainer) {
-      classicContainer.style.display = 'none';
-    }
-    const racingContainer = document.getElementById('racing-track-container');
-    if (racingContainer) {
-      racingContainer.style.display = 'none';
-    }
-    const towerDefenseContainer = document.getElementById('tower-defense-container');
-    if (towerDefenseContainer) {
-      towerDefenseContainer.style.display = 'none';
-    }
-    // Restart meteorite rain game
-    if (state.currentGame && state.currentGame.startGame) {
-      setTimeout(() => {
-        if (state.currentGame && state.currentGame.startGame) {
-          state.currentGame.startGame();
-        }
-      }, 100);
-    }
-  } else if (isTowerDefense) {
-    const towerDefenseContainer = document.getElementById('tower-defense-container');
-    if (towerDefenseContainer) {
-      towerDefenseContainer.style.display = 'flex';
-    }
-    const classicContainer = document.getElementById('classic-typing-container');
-    if (classicContainer) {
-      classicContainer.style.display = 'none';
-    }
-    const racingContainer = document.getElementById('racing-track-container');
-    if (racingContainer) {
-      racingContainer.style.display = 'none';
-    }
-    const meteoriteContainer = document.getElementById('meteorite-rain-container');
-    if (meteoriteContainer) {
-      meteoriteContainer.style.display = 'none';
-    }
-    // Restart tower defense game
-    if (state.currentGame && state.currentGame.startGame) {
-      setTimeout(() => {
-        if (state.currentGame && state.currentGame.startGame) {
-          state.currentGame.startGame();
-        }
-      }, 100);
-    }
-  } else {
-    const typingTextContainer = document.querySelector('.typing-text-container');
-    if (typingTextContainer) {
-      typingTextContainer.style.display = 'block';
-    }
-    const racingContainer = document.getElementById('racing-track-container');
-    if (racingContainer) {
-      racingContainer.style.display = 'none';
-    }
-    const meteoriteContainer = document.getElementById('meteorite-rain-container');
-    if (meteoriteContainer) {
-      meteoriteContainer.style.display = 'none';
-    }
-    const towerDefenseContainer = document.getElementById('tower-defense-container');
-    if (towerDefenseContainer) {
-      towerDefenseContainer.style.display = 'none';
+  showGameContainer(state.config.gameType);
+
+  if (['meteoriteRain', 'towerDefense'].includes(state.config.gameType)) {
+    if (state.currentGame?.startGame) {
+      setTimeout(() => { state.currentGame?.startGame(); }, 100);
     }
   }
 
@@ -146,9 +61,8 @@ export function restart() {
   }
 
   // Show keyboard-stats-wrapper again
-  const keyboardStatsWrapper = document.querySelector('.keyboard-stats-wrapper');
-  if (keyboardStatsWrapper) {
-    keyboardStatsWrapper.style.display = 'block';
+  if (state.keyboardStatsWrapper) {
+    state.keyboardStatsWrapper.style.display = 'block';
   }
 
   // Show keyboard again if it was enabled
@@ -166,9 +80,8 @@ export function restart() {
   // Focus the appropriate input after a short delay
   setTimeout(() => {
     if (isMeteoriteRain) {
-      const meteoriteInput = document.getElementById('meteorite-typing-input');
-      if (meteoriteInput) {
-        meteoriteInput.focus();
+      if (state.meteoriteInput) {
+        state.meteoriteInput.focus();
       }
     } else if (state.hiddenInput) {
       state.hiddenInput.focus();

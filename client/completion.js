@@ -8,32 +8,11 @@ import {
   saveStatistics,
   parseStatsText
 } from './stats.js';
+import { hideAllGameContainers } from './game-manager.js';
 
 // Load and display stats dashboard
 async function showStatsDashboard() {
-  // Hide typing container
-  const typingTextContainer = document.getElementById('classic-typing-container');
-  if (typingTextContainer) {
-    typingTextContainer.style.display = 'none';
-  }
-
-  // Hide racing track
-  const racingTrackContainer = document.getElementById('racing-track-container');
-  if (racingTrackContainer) {
-    racingTrackContainer.style.display = 'none';
-  }
-
-  // Hide meteorite rain container
-  const meteoriteRainContainer = document.getElementById('meteorite-rain-container');
-  if (meteoriteRainContainer) {
-    meteoriteRainContainer.style.display = 'none';
-  }
-
-  // Hide tower defense container
-  const towerDefenseContainer = document.getElementById('tower-defense-container');
-  if (towerDefenseContainer) {
-    towerDefenseContainer.style.display = 'none';
-  }
+  hideAllGameContainers();
 
   // Hide the restart button when dashboard is shown
   if (state.restartButton && state.restartButton.parentElement) {
@@ -55,9 +34,8 @@ async function showStatsDashboard() {
   }
 
   // Hide keyboard-stats-wrapper when dashboard is shown
-  const keyboardStatsWrapper = document.querySelector('.keyboard-stats-wrapper');
-  if (keyboardStatsWrapper) {
-    keyboardStatsWrapper.style.display = 'none';
+  if (state.keyboardStatsWrapper) {
+    state.keyboardStatsWrapper.style.display = 'none';
   }
 
   // Hide completion screen if visible
@@ -129,41 +107,17 @@ async function showStatsDashboard() {
 }
 
 export function showCompletionScreen() {
-  console.log('showCompletionScreen called');
-
   // Hide stats dashboard if visible
   if (state.statsDashboard) {
     state.statsDashboard.style.display = 'none';
   }
 
   if (!state.completionScreen) {
-    console.error('Completion screen element not found!');
+    console.error('Completion screen element not found');
     return;
   }
 
-  // Hide typing container
-  const typingTextContainer = document.getElementById('classic-typing-container');
-  if (typingTextContainer) {
-    typingTextContainer.style.display = 'none';
-  }
-
-  // Hide racing track
-  const racingTrackContainer = document.getElementById('racing-track-container');
-  if (racingTrackContainer) {
-    racingTrackContainer.style.display = 'none';
-  }
-
-  // Hide meteorite rain container
-  const meteoriteRainContainer = document.getElementById('meteorite-rain-container');
-  if (meteoriteRainContainer) {
-    meteoriteRainContainer.style.display = 'none';
-  }
-
-  // Hide tower defense container
-  const towerDefenseContainer = document.getElementById('tower-defense-container');
-  if (towerDefenseContainer) {
-    towerDefenseContainer.style.display = 'none';
-  }
+  hideAllGameContainers();
 
   // Hide keyboard when completion screen is shown
   if (state.keyboardContainer) {
@@ -180,9 +134,8 @@ export function showCompletionScreen() {
   }
 
   // Hide keyboard-stats-wrapper when completion screen is shown
-  const keyboardStatsWrapper = document.querySelector('.keyboard-stats-wrapper');
-  if (keyboardStatsWrapper) {
-    keyboardStatsWrapper.style.display = 'none';
+  if (state.keyboardStatsWrapper) {
+    state.keyboardStatsWrapper.style.display = 'none';
   }
 
   // Hide the restart button when completion screen is shown
@@ -191,9 +144,7 @@ export function showCompletionScreen() {
   }
 
   // Calculate and save statistics
-  console.log('About to calculate statistics...');
   const stats = calculateCompletionStats();
-  console.log('Statistics result:', stats);
   const isMeteoriteRainGame = state.config.gameType === 'meteoriteRain';
 
   // For racing game or meteorite rain, show dashboard even if stats are null
@@ -201,43 +152,22 @@ export function showCompletionScreen() {
   const shouldShowDashboard = state.config.showStats === true || (isRacingGame && state.currentGame.playerWon !== null) || isMeteoriteRainGame;
 
   if (stats) {
-    console.log('Calling saveStatistics...');
     saveStatistics(stats).then(() => {
-      // After saving, check if we should show stats dashboard
       if (shouldShowDashboard) {
-        // Wait a bit for the file to be written, then show dashboard
-        setTimeout(() => {
-          showStatsDashboard();
-        }, 200);
+        setTimeout(() => showStatsDashboard(), 200);
       } else {
-        // Show simple completion screen
-        // Ensure real-time stats are hidden
-        if (state.realtimeStatsContainer) {
-          state.realtimeStatsContainer.style.display = 'none';
-        }
+        if (state.realtimeStatsContainer) state.realtimeStatsContainer.style.display = 'none';
         state.completionScreen.style.display = 'flex';
-        if (state.hiddenInput) {
-          state.hiddenInput.blur();
-        }
+        if (state.hiddenInput) state.hiddenInput.blur();
       }
     });
   } else {
-    console.log('No statistics to save (stats is null)');
-    // For racing game or meteorite rain, still show dashboard
     if (shouldShowDashboard) {
-      setTimeout(() => {
-        showStatsDashboard();
-      }, 200);
+      setTimeout(() => showStatsDashboard(), 200);
     } else {
-      // Show simple completion screen
-      // Ensure real-time stats are hidden
-      if (state.realtimeStatsContainer) {
-        state.realtimeStatsContainer.style.display = 'none';
-      }
+      if (state.realtimeStatsContainer) state.realtimeStatsContainer.style.display = 'none';
       state.completionScreen.style.display = 'flex';
-      if (state.hiddenInput) {
-        state.hiddenInput.blur();
-      }
+      if (state.hiddenInput) state.hiddenInput.blur();
     }
   }
 }

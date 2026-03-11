@@ -113,6 +113,18 @@ export function highlightKey(char, isError = false) {
   }
 }
 
+// Clear the active keyboard highlight
+export function clearKeyHighlight() {
+  if (state.activeKeyElement) {
+    state.activeKeyElement.classList.remove('active', 'active-error');
+    state.activeKeyElement = null;
+  }
+  if (state.activeKeyTimeout) {
+    clearTimeout(state.activeKeyTimeout);
+    state.activeKeyTimeout = null;
+  }
+}
+
 // Render the keyboard
 function renderKeyboard() {
   if (!state.keyboardContainer) return;
