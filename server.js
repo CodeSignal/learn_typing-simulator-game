@@ -4,6 +4,7 @@ const path = require('path');
 const url = require('url');
 
 const DIST_DIR = path.join(__dirname, 'dist');
+const CLIENT_DIR = path.join(__dirname, 'client');
 // Check if IS_PRODUCTION is set to true
 const isProduction = process.env.IS_PRODUCTION === 'true';
 // In production mode, dist directory must exist
@@ -37,6 +38,12 @@ function getMimeType(filePath) {
   return mimeTypes[ext] || 'text/plain';
 }
 
+function getStatsFilePath() {
+  return isProduction
+    ? path.join(DIST_DIR, 'stats.txt')
+    : path.join(CLIENT_DIR, 'stats.txt');
+}
+
 // Serve static files
 function serveFile(filePath, res) {
   fs.readFile(filePath, (err, data) => {
@@ -63,15 +70,12 @@ function handlePostRequest(req, res, parsedUrl) {
 
     req.on('end', () => {
       try {
-        const clientDir = path.join(__dirname, 'client');
-        const statsPath = path.join(clientDir, 'stats.txt');
-
-        // Ensure client directory exists
-        if (!fs.existsSync(clientDir)) {
-          fs.mkdirSync(clientDir, { recursive: true });
+        const statsPath = getStatsFilePath();
+        const statsDir = path.dirname(statsPath);
+        if (!fs.existsSync(statsDir)) {
+          fs.mkdirSync(statsDir, { recursive: true });
         }
 
-        // Write stats to file
         fs.writeFileSync(statsPath, body, 'utf8');
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
