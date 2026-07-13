@@ -84,7 +84,6 @@ export function renderText() {
   }
 
   // Render text based on game type
-  const isRacing = state.config.gameType === 'racing';
   const isTowerDefense = state.config.gameType === 'towerDefense';
 
   // For tower defense, only render the current word (handled by updateWordDisplay)
