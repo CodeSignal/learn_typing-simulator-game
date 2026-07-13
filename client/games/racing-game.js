@@ -28,6 +28,8 @@ export class RacingGame {
       this.finishLineTextPosition = 0; // Position in text coordinates
       this.isFinished = false;
       this.playerWon = null; // null = not finished, true = player won, false = player lost
+      this.resizeObserver = null;
+      this.isDestroyed = false;
     }
 
     initialize() {
@@ -40,16 +42,25 @@ export class RacingGame {
         classicContainer.style.display = 'none';
       }
 
-      // Calculate track dimensions
-      this.updateTrackDimensions();
+      this.isDestroyed = false;
+
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(() => {
+          this.updateFinishLinePosition();
+        });
+        this.resizeObserver.observe(this.trackContainer);
+      }
+
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(() => {
+          if (!this.isDestroyed) {
+            this.updateFinishLinePosition();
+          }
+        });
+      }
 
       // Reset positions
       this.reset();
-    }
-
-    updateTrackDimensions() {
-      if (!this.trackElement) return;
-      this.trackWidth = this.trackElement.offsetWidth;
     }
 
     reset() {
@@ -118,36 +129,23 @@ export class RacingGame {
     }
 
     updateFinishLinePosition() {
-      if (!this.typingTextElement || !this.finishLine) return;
+      if (!this.typingTextElement || !this.finishLine || !this.trackElement) return;
 
-      const allChars = this.typingTextElement.querySelectorAll('span');
-      if (allChars.length === 0) {
-        const minWidth = 70;
-        const lanes = this.trackElement ? this.trackElement.querySelectorAll('.racing-track-lane') : [];
-        lanes.forEach(lane => {
-          lane.style.width = `${minWidth}px`;
-        });
-        if (this.trackElement) {
-          this.trackElement.style.width = `${minWidth}px`;
-        }
-        return;
-      }
+      const textWidth = this.typingTextElement.scrollWidth;
+      if (!this.typingTextElement.textContent || textWidth <= 0) return;
 
-      const lastChar = allChars[allChars.length - 1];
-      const finishLineTextPosition = lastChar.offsetLeft + lastChar.offsetWidth;
-      this.finishLineTextPosition = finishLineTextPosition;
+      this.finishLineTextPosition = textWidth;
 
       const buffer = 20;
-      const finishLinePosition = 70 + finishLineTextPosition + buffer;
+      const finishLinePosition = 70 + textWidth + buffer;
 
-      const lanes = this.trackElement ? this.trackElement.querySelectorAll('.racing-track-lane') : [];
+      const lanes = this.trackElement.querySelectorAll('.racing-track-lane');
       lanes.forEach(lane => {
         lane.style.width = `${finishLinePosition}px`;
       });
 
-      if (this.trackElement) {
-        this.trackElement.style.width = `${finishLinePosition}px`;
-      }
+      this.trackElement.style.width = `${finishLinePosition}px`;
+      this.trackWidth = finishLinePosition;
     }
 
     updateOpponents(currentTime) {
@@ -209,6 +207,11 @@ export class RacingGame {
     }
 
     destroy() {
+      this.isDestroyed = true;
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = null;
+      }
       this.isFinished = false;
     }
   }

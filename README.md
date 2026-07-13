@@ -2,7 +2,7 @@
 
 Typing practice app with three modes:
 - `classic`: standard text typing
-- `racing`: race opponents while typing
+- `racing`: race opponents while typing; the track follows the rendered passage and adapts when its container becomes visible or resizes
 - `meteoriteRain`: destroy falling word meteorites by typing them
 
 ## Setup

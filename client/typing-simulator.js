@@ -127,16 +127,6 @@ async function initialize() {
     }
   }
 
-  // Update track dimensions after text is loaded (for racing game)
-  if (state.currentGame && state.currentGame.updateTrackDimensions) {
-    // Wait for layout to settle
-    setTimeout(() => {
-      if (state.currentGame && state.currentGame.updateTrackDimensions) {
-        state.currentGame.updateTrackDimensions();
-      }
-    }, 100);
-  }
-
   // Initialize real-time stats display
   updateRealtimeStats();
 
@@ -162,8 +152,8 @@ async function initialize() {
       clearTimeout(resizeTimeout);
     }
     resizeTimeout = setTimeout(() => {
-      if (state.currentGame && state.currentGame.updateTrackDimensions) {
-        state.currentGame.updateTrackDimensions();
+      if (state.currentGame && state.currentGame.updateFinishLinePosition) {
+        state.currentGame.updateFinishLinePosition();
       }
     }, 250);
   });
