@@ -141,6 +141,39 @@
         <div class="typing-text-container" id="classic-typing-container">
           <div id="typing-text" class="typing-text"></div>
         </div>
+        <!-- Audio Dictation View -->
+        <div id="audio-container" class="audio-container" style="display: none;">
+          <audio id="audio-player" preload="auto"></audio>
+          <div class="audio-dictation">
+            <div class="audio-listen-panel">
+              <div class="audio-icon" aria-hidden="true">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+              </div>
+              <p class="audio-instructions">Listen to the audio and type exactly what you hear.</p>
+              <div class="audio-controls">
+                <button id="btn-audio-play" class="button button-primary" type="button">Play audio</button>
+                <button id="btn-audio-replay" class="button button-secondary" type="button">Replay</button>
+              </div>
+              <p id="audio-status" class="audio-status" aria-live="polite"></p>
+            </div>
+            <textarea
+              id="audio-transcription-input"
+              class="input audio-transcription-input"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="Start typing what you hear..."
+            ></textarea>
+            <div class="audio-submit-container">
+              <button id="btn-audio-submit" class="button button-primary" type="button">Submit transcription</button>
+            </div>
+          </div>
+        </div>
         <!-- Hidden input - must be outside containers to work in all game modes -->
         <textarea
           id="hidden-input"

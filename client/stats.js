@@ -54,6 +54,30 @@ function calculateSpeed(charsTyped, totalTimeSeconds) {
   return (charsTyped / 5) / (totalTimeSeconds / 60);
 }
 
+// Levenshtein edit distance. Works over strings (char-level) or arrays of
+// strings (word-level), since it only relies on indexing and strict equality.
+function editDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+
+  return prev[n];
+}
+
 function getTextCharsProgress() {
   return createCharsProgress(state.typedText.length, state.originalText.length);
 }
@@ -106,9 +130,49 @@ function buildMeteoriteSnapshot(now) {
   };
 }
 
+// Audio dictation: the target text is hidden and spoken aloud, and the user
+// transcribes it freely. Accuracy is a character-level similarity and
+// "errors left" is the count of mis-transcribed words (word-level distance).
+function buildAudioSnapshot(now) {
+  const target = state.originalText || '';
+  const typed = (state.currentGame && state.currentGame.typedText) || state.typedText || '';
+
+  if (state.startTime === null) {
+    return null;
+  }
+
+  const totalTime = getElapsedSeconds(state.startTime, now);
+  const charDistance = editDistance(typed, target);
+  const targetWords = target.trim().split(/\s+/).filter(Boolean);
+  const typedWords = typed.trim().split(/\s+/).filter(Boolean);
+  const wordDistance = editDistance(typedWords, targetWords);
+  const maxChars = Math.max(target.length, typed.length, 1);
+  const accuracy = Math.max(0, (1 - charDistance / maxChars) * 100);
+
+  return {
+    totalErrors: charDistance,
+    errorsLeft: wordDistance,
+    totalTime,
+    accuracy,
+    speed: calculateSpeed(typed.length, totalTime),
+    chars: createCharsProgress(typed.length, target.length)
+  };
+}
+
 function buildStatsSnapshot({ mode = 'realtime', now = Date.now() } = {}) {
   if (state.config.gameType === 'meteoriteRain') {
     return buildMeteoriteSnapshot(now);
+  }
+
+  if (state.config.gameType === 'audio') {
+    const audioSnapshot = buildAudioSnapshot(now);
+    if (audioSnapshot) {
+      return audioSnapshot;
+    }
+    if (mode === 'completion') {
+      return null;
+    }
+    return createEmptySnapshot(getTextCharsProgress());
   }
 
   const textModeSnapshot = buildTextModeSnapshot(now);

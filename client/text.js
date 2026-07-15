@@ -47,6 +47,11 @@ export async function loadText() {
 }
 
 export function renderText() {
+  // Audio dictation mode hides the target text and manages its own view.
+  if (state.config.gameType === 'audio') {
+    return;
+  }
+
   // Calculate correct characters count
   let correctCharsCount = 0;
   for (let i = 0; i < state.charStates.length; i++) {

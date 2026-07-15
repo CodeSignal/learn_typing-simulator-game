@@ -83,6 +83,11 @@ export function restart() {
       if (state.meteoriteInput) {
         state.meteoriteInput.focus();
       }
+    } else if (state.config.gameType === 'audio') {
+      const audioInput = document.getElementById('audio-transcription-input');
+      if (audioInput) {
+        audioInput.focus();
+      }
     } else if (state.hiddenInput) {
       state.hiddenInput.focus();
     }
