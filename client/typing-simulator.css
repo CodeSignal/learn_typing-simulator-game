@@ -233,7 +233,9 @@
 .bespoke .typing-text-container {
   flex: 1 1 auto;
   position: relative;
-  overflow: hidden; /* Remove scrolling - content must fit */
+  overflow-y: auto; /* Long passages scroll; auto-scrolled to keep the cursor in view */
+  overflow-x: hidden;
+  scrollbar-width: none; /* Firefox: hide scrollbar (scrolling follows the cursor automatically) */
   padding: var(--UI-Spacing-spacing-mxl);
   background: transparent;
   font-family: var(--body-family);
@@ -254,9 +256,14 @@
   user-select: none;
   text-align: left;
   width: 100%;
-  overflow: hidden; /* Prevent text from causing scroll */
+  overflow: visible; /* Full passage lays out; the container scrolls to the cursor */
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* Hide the scrollbar in WebKit/Blink; scrolling is driven programmatically to follow the cursor */
+.bespoke .typing-text-container::-webkit-scrollbar {
+  display: none;
 }
 
 .bespoke .typing-text .char-pending {
