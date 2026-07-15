@@ -33,6 +33,24 @@ export class ClassicGame {
   renderText(textHtml) {
     if (this.textContainer) {
       this.textContainer.innerHTML = textHtml;
+      this.scrollCursorIntoView();
+    }
+  }
+
+  // Keep the current typing position visible for passages taller than the view.
+  scrollCursorIntoView() {
+    const container = this.textContainer.closest('.typing-text-container');
+    if (!container) return;
+    const cursor = this.textContainer.querySelector('.cursor-position');
+    if (!cursor) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const cursorRect = cursor.getBoundingClientRect();
+    // Distance from the cursor to the vertical center of the viewport.
+    const delta = (cursorRect.top - containerRect.top) - container.clientHeight / 2;
+    // Only adjust when the cursor has drifted meaningfully to avoid jitter.
+    if (Math.abs(delta) > 4) {
+      container.scrollTop += delta;
     }
   }
 

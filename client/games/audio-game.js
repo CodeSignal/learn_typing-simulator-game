@@ -1,0 +1,188 @@
+// audio-game.js — Audio dictation mode
+// A short audio clip is played and the target transcript is kept hidden from
+// the user, who types what they hear. The clip is a real recording supplied via
+// `config.audio.src` (an audio/video URL); if none is configured, it falls back
+// to the browser's speech synthesis. On submit, the transcription is compared
+// against the target to produce accuracy/speed/error statistics.
+
+import { state } from '../state.js';
+import { updateRealtimeStats } from '../stats.js';
+import { showCompletionScreen } from '../completion.js';
+
+export class AudioGame {
+  constructor() {
+    this.container = document.getElementById('audio-container');
+    this.input = document.getElementById('audio-transcription-input');
+    this.playButton = document.getElementById('btn-audio-play');
+    this.replayButton = document.getElementById('btn-audio-replay');
+    this.submitButton = document.getElementById('btn-audio-submit');
+    this.statusEl = document.getElementById('audio-status');
+    this.audioEl = document.getElementById('audio-player');
+
+    this.typedText = '';
+    this.hasSubmitted = false;
+    this.hasPlayed = false;
+
+    // Bind handlers once so they can be detached on destroy.
+    this._onInput = this._onInput.bind(this);
+    this._onPlay = this.play.bind(this);
+    this._onSubmit = this.submit.bind(this);
+  }
+
+  initialize() {
+    if (this.container) this.container.style.display = 'flex';
+
+    const classicContainer = document.getElementById('classic-typing-container');
+    if (classicContainer) classicContainer.style.display = 'none';
+
+    // Wire up the audio file player when a clip URL is configured.
+    if (this.audioEl && this._audioSrc()) {
+      this.audioEl.src = this._audioSrc();
+      const rate = state.config.audio && state.config.audio.rate;
+      if (typeof rate === 'number' && rate > 0) this.audioEl.playbackRate = rate;
+      this.audioEl.onplay = () => this._updateStatus('Playing audio…');
+      this.audioEl.onended = () => this._updateStatus('Audio finished. Use Replay to hear it again.');
+      this.audioEl.onerror = () => this._updateStatus('Could not load the audio clip.');
+    }
+
+    if (this.input) {
+      this.input.value = '';
+      this.input.addEventListener('input', this._onInput);
+    }
+    if (this.playButton) this.playButton.addEventListener('click', this._onPlay);
+    if (this.replayButton) this.replayButton.addEventListener('click', this._onPlay);
+    if (this.submitButton) this.submitButton.addEventListener('click', this._onSubmit);
+
+    this._resetStatus();
+  }
+
+  _audioSrc() {
+    return (state.config.audio && state.config.audio.src) || '';
+  }
+
+  hasAudioFile() {
+    return !!(this.audioEl && this._audioSrc());
+  }
+
+  isSpeechSupported() {
+    return typeof window !== 'undefined' &&
+      'speechSynthesis' in window &&
+      typeof SpeechSynthesisUtterance !== 'undefined';
+  }
+
+  play() {
+    if (!state.originalText) return;
+
+    // Preferred path: play the supplied audio clip.
+    if (this.hasAudioFile()) {
+      try {
+        this.audioEl.currentTime = 0;
+        const p = this.audioEl.play();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => this._updateStatus('Press "Play audio" to start the clip.'));
+        }
+        this.hasPlayed = true;
+        if (this.input) this.input.focus();
+      } catch (error) {
+        console.error('Error playing audio clip:', error);
+        this._updateStatus('Could not play the audio clip.');
+      }
+      return;
+    }
+
+    // Fallback: browser speech synthesis (used when no clip URL is configured).
+    if (!this.isSpeechSupported()) {
+      this._updateStatus('Audio playback is not available in this browser.');
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(state.originalText);
+      const rate = state.config.audio && state.config.audio.rate;
+      if (typeof rate === 'number' && rate > 0) {
+        utterance.rate = rate;
+      }
+      utterance.onstart = () => this._updateStatus('Playing audio…');
+      utterance.onend = () => this._updateStatus('Audio finished. Use Replay to hear it again.');
+      window.speechSynthesis.speak(utterance);
+      this.hasPlayed = true;
+      if (this.input) this.input.focus();
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      this._updateStatus('Could not play audio.');
+    }
+  }
+
+  _onInput(e) {
+    if (this.hasSubmitted) return;
+
+    this.typedText = e.target.value;
+    // Mirror into shared state so stats.js stays the single source of truth.
+    state.typedText = this.typedText;
+
+    if (state.startTime === null && this.typedText.length > 0) {
+      state.startTime = Date.now();
+    }
+
+    updateRealtimeStats();
+  }
+
+  submit() {
+    if (this.hasSubmitted) return;
+    this.hasSubmitted = true;
+
+    this._stopPlayback();
+
+    this.typedText = this.input ? this.input.value : this.typedText;
+    state.typedText = this.typedText;
+
+    // Ensure a start time exists even if the user submits without typing.
+    if (state.startTime === null) state.startTime = Date.now();
+
+    showCompletionScreen();
+  }
+
+  reset() {
+    this.hasSubmitted = false;
+    this.hasPlayed = false;
+    this.typedText = '';
+    if (this.input) this.input.value = '';
+    this._stopPlayback();
+    this._resetStatus();
+  }
+
+  // Audio mode manages its own view; text.js renderText delegates here as a no-op.
+  renderText() {}
+
+  _stopPlayback() {
+    if (this.audioEl) {
+      try { this.audioEl.pause(); this.audioEl.currentTime = 0; } catch (e) { /* ignore */ }
+    }
+    if (this.isSpeechSupported()) window.speechSynthesis.cancel();
+  }
+
+  _resetStatus() {
+    let message;
+    if (this.hasAudioFile()) {
+      message = 'Press "Play audio" to hear the clip, then type what you hear.';
+    } else if (this.isSpeechSupported()) {
+      message = 'Press "Play audio" to hear the text, then type what you hear.';
+    } else {
+      message = 'Audio playback is not available in this browser.';
+    }
+    this._updateStatus(message);
+  }
+
+  _updateStatus(message) {
+    if (this.statusEl) this.statusEl.textContent = message;
+  }
+
+  destroy() {
+    if (this.input) this.input.removeEventListener('input', this._onInput);
+    if (this.playButton) this.playButton.removeEventListener('click', this._onPlay);
+    if (this.replayButton) this.replayButton.removeEventListener('click', this._onPlay);
+    if (this.submitButton) this.submitButton.removeEventListener('click', this._onSubmit);
+    this._stopPlayback();
+  }
+}

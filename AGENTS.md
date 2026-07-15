@@ -10,6 +10,7 @@ Supported game modes are configured in `client/config.json`:
 - `racing`: player car vs opponents progressing across the typed text
 - `meteoriteRain`: type falling words before they hit the ground
 - `towerDefense`: type prompted words to defeat enemies before they reach the castle
+- `audio`: a recorded clip (`audio.src`, falling back to the Web Speech API) is played while the target text stays hidden; the user transcribes what they hear
 
 ## Runtime Architecture
 
@@ -28,6 +29,7 @@ Supported game modes are configured in `client/config.json`:
 - `client/games/racing-game.js`: racing mode behavior and animation
 - `client/games/meteorite-rain-game.js`: meteorite rain gameplay loop
 - `client/games/tower-defense-game.js`: tower defense gameplay loop and UI updates
+- `client/games/audio-game.js`: audio dictation mode (speaks the hidden target text, captures the transcription, and triggers stats)
 - `client/typing-simulator.css`: simulator visuals for all game modes
 - `client/help.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal component used by help modal flow
@@ -80,5 +82,5 @@ npm run start:prod
   - help modal opens from `#btn-help`
   - active game mode from `client/config.json` initializes the correct container and input flow
   - completion and restart flows still work
-  - affected game loops still start/reset correctly (`racing`, `meteoriteRain`, `towerDefense`)
+  - affected game loops still start/reset correctly (`racing`, `meteoriteRain`, `towerDefense`, `audio`)
   - stats persist to `client/stats.txt` through `/save-stats`

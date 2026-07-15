@@ -6,12 +6,14 @@ import { RacingGame } from './games/racing-game.js';
 import { ClassicGame } from './games/classic-game.js';
 import { MeteoriteRainGame } from './games/meteorite-rain-game.js';
 import { TowerDefenseGame } from './games/tower-defense-game.js';
+import { AudioGame } from './games/audio-game.js';
 
 const GAME_CONTAINERS = [
   'classic-typing-container',
   'racing-track-container',
   'meteorite-rain-container',
   'tower-defense-container',
+  'audio-container',
 ];
 
 export function hideAllGameContainers() {
@@ -31,6 +33,9 @@ export function showGameContainer(gameType) {
     if (el) el.style.display = 'flex';
   } else if (gameType === 'towerDefense') {
     const el = document.getElementById('tower-defense-container');
+    if (el) el.style.display = 'flex';
+  } else if (gameType === 'audio') {
+    const el = document.getElementById('audio-container');
     if (el) el.style.display = 'flex';
   } else {
     const el = document.getElementById('classic-typing-container');
@@ -61,6 +66,8 @@ export function initializeGame() {
     state.currentGame = new MeteoriteRainGame();
   } else if (gameType === 'towerDefense') {
     state.currentGame = new TowerDefenseGame();
+  } else if (gameType === 'audio') {
+    state.currentGame = new AudioGame();
   } else {
     state.currentGame = new ClassicGame();
   }
@@ -100,8 +107,8 @@ export function initializeGame() {
     }, 100);
   }
 
-  // Re-render text if it's already loaded (not for meteorite rain or tower defense)
-  if (state.originalText.length > 0 && gameType !== 'meteoriteRain' && gameType !== 'towerDefense') {
+  // Re-render text if it's already loaded (not for meteorite rain, tower defense, or audio)
+  if (state.originalText.length > 0 && gameType !== 'meteoriteRain' && gameType !== 'towerDefense' && gameType !== 'audio') {
     renderText();
   }
 
