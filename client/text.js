@@ -119,7 +119,10 @@ export function renderText() {
     let displayChar = char;
     const isSpace = char === ' ';
     if (isSpace) {
-      displayChar = '\u00A0'; // Non-breaking space
+      // Use a normal (breakable) space in wrapping views so lines break between
+      // words instead of mid-word. Racing is single-line, so keep it
+      // non-breaking there to preserve the continuous track layout.
+      displayChar = isRacing ? '\u00A0' : ' ';
       className += ' char-space'; // Add class to identify spaces
     } else if (char === '\n') {
       // For racing, convert newlines to spaces (single line display)
