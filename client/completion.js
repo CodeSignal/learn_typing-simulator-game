@@ -88,6 +88,17 @@ async function showStatsDashboard() {
     if (errorsEl) errorsEl.textContent = formatStatValue('errors', stats);
     if (errorsLeftEl) errorsLeftEl.textContent = formatStatValue('errorsLeft', stats);
 
+    // In audio (dictation) mode the two error stats are edit distances against
+    // the hidden transcript, not keystroke errors, so relabel them accordingly.
+    if (state.config.gameType === 'audio') {
+      const errorsLabel = errorsEl && errorsEl.closest('.stat-card') &&
+        errorsEl.closest('.stat-card').querySelector('.stat-label');
+      const errorsLeftLabel = errorsLeftEl && errorsLeftEl.closest('.stat-card') &&
+        errorsLeftEl.closest('.stat-card').querySelector('.stat-label');
+      if (errorsLabel) errorsLabel.textContent = 'Character errors';
+      if (errorsLeftLabel) errorsLeftLabel.textContent = 'Word errors';
+    }
+
     // Show dashboard
     if (state.statsDashboard) {
       state.statsDashboard.style.display = 'flex';

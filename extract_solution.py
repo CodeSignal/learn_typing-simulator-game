@@ -55,6 +55,15 @@ def extract_stats():
     if match:
         stats['speed'] = float(match.group(1))
 
+    # Extract transcripts (audio dictation mode) so the grader can compare the
+    # actual transcription against the reference, not only the numeric stats.
+    match = re.search(
+        r'Expected Transcription:\n(.*?)\n\nSubmitted Transcription:\n(.*?)\n\nGenerated:',
+        content, re.DOTALL)
+    if match:
+        stats['expected_transcription'] = match.group(1).strip()
+        stats['submitted_transcription'] = match.group(2).strip()
+
     # Extract Generated timestamp
     match = re.search(r'Generated:\s*(.+)', content)
     if match:
@@ -108,6 +117,14 @@ def extract_stats():
 
     if 'speed' in stats:
         print(f"Speed: {stats['speed']:.2f} words per minute")
+
+    if 'expected_transcription' in stats:
+        print()
+        print("Expected Transcription:")
+        print(stats['expected_transcription'])
+        print()
+        print("Submitted Transcription:")
+        print(stats['submitted_transcription'])
 
     if 'generated' in stats:
         print(f"Generated: {stats['generated']}")

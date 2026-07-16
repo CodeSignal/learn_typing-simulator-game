@@ -49,8 +49,11 @@ total time, volume, and playback speed (via its overflow menu) — and the user
 transcribes what they hear. (`rate` sets the initial playback speed; if no `src`
 is set it falls back to the browser's speech synthesis with simple Play/Replay
 buttons.) Accuracy is a character-level similarity to the reference text
-(`text-to-input.txt`, which must match the clip) and `errorsLeft` reports the
-number of mis-transcribed words.
+(`text-to-input.txt`, which must match the clip) and the errors-left metric
+reports the number of mis-transcribed words (these two are relabeled "Character
+errors" / "Word errors" on the audio results dashboard). The saved `stats.txt`
+also includes both the expected and submitted transcriptions so a grader can
+evaluate the actual transcription, not just the numbers.
 
 ## Main Files
 
