@@ -43,11 +43,14 @@ Runtime behavior is controlled by `client/config.json`:
 - `towerDefense`: mode-specific config (`initialLives`, `cellSize`, `enemySpawnInterval`, `enemySpeed`, `enemyHealth`)
 - `audio`: mode-specific config (`src` — URL of an audio/video clip to play; `rate` — playback rate, e.g. `0.9`)
 
-In `audio` mode the target text is not shown. A recorded clip is played from
-`audio.src` (falling back to the browser's speech synthesis if no `src` is set),
-and the user transcribes what they hear. Accuracy is a character-level
-similarity to the reference text (`text-to-input.txt`, which must match the clip)
-and `errorsLeft` reports the number of mis-transcribed words.
+In `audio` mode the target text is not shown. A recorded clip from `audio.src` is
+played through the browser's native audio player — play/pause, seek, elapsed /
+total time, volume, and playback speed (via its overflow menu) — and the user
+transcribes what they hear. (`rate` sets the initial playback speed; if no `src`
+is set it falls back to the browser's speech synthesis with simple Play/Replay
+buttons.) Accuracy is a character-level similarity to the reference text
+(`text-to-input.txt`, which must match the clip) and `errorsLeft` reports the
+number of mis-transcribed words.
 
 ## Main Files
 
