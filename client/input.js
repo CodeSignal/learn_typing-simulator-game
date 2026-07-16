@@ -156,10 +156,12 @@ export function handleInput(e) {
           highlightKey(typedChar, true);
         }
 
-        if (state.config.allowMistakes) {
-          // Natural typing: accept the wrong character (shown as incorrect) and
-          // keep going. It counts against accuracy and remains an "error left"
-          // until the user backspaces to fix it.
+        if (state.config.allowMistakes && state.config.gameType !== 'racing') {
+          // Natural typing (non-racing): accept the wrong character (shown as
+          // incorrect) and keep going. It counts against accuracy and remains an
+          // "error left" until the user backspaces to fix it. Racing is excluded
+          // because its completion requires every character to be correct;
+          // accepting wrong characters there would soft-lock the finish.
           validInput += typedChar;
           state.charStates[charIndex] = 'incorrect';
         } else {
