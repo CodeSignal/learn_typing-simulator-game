@@ -149,7 +149,6 @@ export function handleInput(e) {
 
       const isError = typedChar !== expectedChar;
       if (isError) {
-        // Don't add incorrect character to input, but count as error
         state.totalErrors++; // Track total errors
 
         // Highlight keyboard key to show error
@@ -157,10 +156,19 @@ export function handleInput(e) {
           highlightKey(typedChar, true);
         }
 
-        // Reset input to valid text (reject the incorrect character)
-        e.target.value = validInput;
-        input = validInput;
-        break; // Stop processing further characters
+        if (state.config.allowMistakes) {
+          // Natural typing: accept the wrong character (shown as incorrect) and
+          // keep going. It counts against accuracy and remains an "error left"
+          // until the user backspaces to fix it.
+          validInput += typedChar;
+          state.charStates[charIndex] = 'incorrect';
+        } else {
+          // Guided mode: reject the incorrect character and stop so the user
+          // must correct it before advancing.
+          e.target.value = validInput;
+          input = validInput;
+          break; // Stop processing further characters
+        }
       } else {
         // Character is correct - add it to valid input
         validInput += typedChar;
