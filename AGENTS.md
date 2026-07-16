@@ -12,6 +12,10 @@ Supported game modes are configured in `client/config.json`:
 - `towerDefense`: type prompted words to defeat enemies before they reach the castle
 - `audio`: a recorded clip (`audio.src`, falling back to the Web Speech API) is played while the target text stays hidden; the user transcribes what they hear
 
+The `allowMistakes` config flag (classic/text modes) toggles natural typing (wrong
+characters are accepted and marked incorrect, completion is reaching the end of the
+text) versus the default guided mode (wrong keystrokes are rejected until corrected).
+
 ## Runtime Architecture
 
 - `client/index.html`: single-page shell with containers and controls for classic, racing, meteorite rain, and tower defense modes

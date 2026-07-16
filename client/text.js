@@ -60,16 +60,21 @@ export function renderText() {
     }
   }
 
-  // Completion threshold: racing always requires the full passage (finish-line semantics).
-  // Classic mode may use racing.mistakesAllowed to allow finishing with fewer correct chars (legacy key location).
+  // Completion threshold. Racing always requires the full passage (finish-line
+  // semantics). In allowMistakes mode (classic/text) the user can type through
+  // errors, so completion is reaching the end of the text. Otherwise it requires
+  // enough correct characters (guided mode, where wrong keystrokes are rejected).
   const textLength = state.originalText.length;
   const isRacing = state.config.gameType === 'racing';
   const mistakesAllowed = state.config.racing?.mistakesAllowed ?? 0;
-  const requiredCorrectChars = isRacing
-    ? textLength
-    : textLength - mistakesAllowed;
+  const requiredCorrectChars = isRacing ? textLength : textLength - mistakesAllowed;
+  const isComplete = textLength > 0 && (
+    (!isRacing && state.config.allowMistakes)
+      ? state.typedText.length >= textLength
+      : correctCharsCount >= requiredCorrectChars
+  );
 
-  if (correctCharsCount >= requiredCorrectChars && textLength > 0) {
+  if (isComplete) {
     console.log('Completion detected! Showing completion screen.');
     console.log('Correct chars:', correctCharsCount, 'Required:', requiredCorrectChars);
 

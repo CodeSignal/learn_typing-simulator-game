@@ -35,6 +35,7 @@ Runtime behavior is controlled by `client/config.json`:
 - `gameType`: `classic`, `racing`, `meteoriteRain`, `towerDefense`, or `audio`
 - `keyboard`: show/hide visual keyboard
 - `availableKeys`: allowed keys (empty array means all keys)
+- `allowMistakes`: when `true`, wrong characters are accepted (shown as incorrect) and typing continues instead of being rejected — natural typing where accuracy and "errors left" reflect real performance; completion is reaching the end of the text. Default `false` (guided mode: wrong keystrokes are rejected and must be corrected to advance).
 - `showStats`: show final stats dashboard
 - `realTimeStats`: enabled live metrics (`speed`, `accuracy`, `time`, `errors`, `errorsLeft`, `chars`)
 - `racing`: mode-specific config (`opponentSpeeds`, `mistakesAllowed`)
