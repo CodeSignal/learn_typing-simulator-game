@@ -162,7 +162,12 @@ export function showCompletionScreen() {
   const isRacingGame = state.config.gameType === 'racing' && state.currentGame;
   const shouldShowDashboard = state.config.showStats === true || (isRacingGame && state.currentGame.playerWon !== null) || isMeteoriteRainGame;
 
-  if (stats) {
+  // When a task opts into transcripts, AudioGame.submit() saves its own stats.txt
+  // (stats + transcripts) before this runs; saving again here would overwrite and
+  // drop the transcript, so skip it in that case.
+  const savedElsewhere = state.config.gameType === 'audio' && state.config.includeTranscript;
+
+  if (stats && !savedElsewhere) {
     saveStatistics(stats).then(() => {
       if (shouldShowDashboard) {
         setTimeout(() => showStatsDashboard(), 200);

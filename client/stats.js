@@ -272,24 +272,8 @@ Errors Left (Unfixed): ${stats.errorsLeft}
 Total Time: ${stats.totalTime.toFixed(2)} seconds
 Accuracy: ${stats.accuracy.toFixed(2)}%
 Speed: ${stats.speed.toFixed(2)} words per minute
-${buildTranscriptSection()}
+
 Generated: ${new Date().toLocaleString()}
-`;
-}
-
-// In audio (dictation) mode the target text is hidden and the user transcribes
-// freely, so include both transcripts in the saved stats. This lets the grader
-// evaluate the actual transcription against the reference, not just the numbers.
-function buildTranscriptSection() {
-  if (state.config.gameType !== 'audio') {
-    return '';
-  }
-  return `
-Expected Transcription:
-${state.originalText}
-
-Submitted Transcription:
-${state.typedText}
 `;
 }
 
