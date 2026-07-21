@@ -10,6 +10,40 @@ import {
 } from './stats.js';
 import { hideAllGameContainers } from './game-manager.js';
 
+// Save the completion stats, and — when the task sets `includeTranscript` (any
+// mode) — append the expected and submitted transcripts so a grader can compare
+// the actual transcription, not just the numbers. The transcripts are added on
+// top of the shared serializer's output (read back and re-posted) so stats.js
+// stays untouched.
+async function saveCompletionStats(stats) {
+  await saveStatistics(stats);
+  if (!state.config.includeTranscript) return;
+  try {
+    // fetch does not throw on HTTP errors; guard so we never append transcripts
+    // to an error page and write that back (the base stats were already saved).
+    const response = await fetch('./stats.txt', { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch stats.txt: ${response.status}`);
+    }
+    const base = await response.text();
+    const transcripts =
+      `Expected Transcription:\n${state.originalText}\n\n` +
+      `Submitted Transcription:\n${state.typedText}\n\n`;
+    const marker = 'Generated:';
+    const idx = base.indexOf(marker);
+    const body = idx >= 0
+      ? base.slice(0, idx) + transcripts + base.slice(idx)
+      : base.replace(/\s*$/, '\n') + '\n' + transcripts;
+    await fetch('/save-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body
+    });
+  } catch (error) {
+    console.error('Could not save transcript:', error);
+  }
+}
+
 // Load and display stats dashboard
 async function showStatsDashboard() {
   hideAllGameContainers();
@@ -162,13 +196,8 @@ export function showCompletionScreen() {
   const isRacingGame = state.config.gameType === 'racing' && state.currentGame;
   const shouldShowDashboard = state.config.showStats === true || (isRacingGame && state.currentGame.playerWon !== null) || isMeteoriteRainGame;
 
-  // When a task opts into transcripts, AudioGame.submit() saves its own stats.txt
-  // (stats + transcripts) before this runs; saving again here would overwrite and
-  // drop the transcript, so skip it in that case.
-  const savedElsewhere = state.config.gameType === 'audio' && state.config.includeTranscript;
-
-  if (stats && !savedElsewhere) {
-    saveStatistics(stats).then(() => {
+  if (stats) {
+    saveCompletionStats(stats).then(() => {
       if (shouldShowDashboard) {
         setTimeout(() => showStatsDashboard(), 200);
       } else {

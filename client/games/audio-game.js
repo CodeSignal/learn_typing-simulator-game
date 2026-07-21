@@ -8,7 +8,7 @@
 // the target to produce accuracy/speed/error statistics.
 
 import { state } from '../state.js';
-import { updateRealtimeStats, calculateCompletionStats, saveStatistics } from '../stats.js';
+import { updateRealtimeStats } from '../stats.js';
 import { showCompletionScreen } from '../completion.js';
 
 export class AudioGame {
@@ -118,7 +118,7 @@ export class AudioGame {
     updateRealtimeStats();
   }
 
-  async submit() {
+  submit() {
     if (this.hasSubmitted) return;
     this.hasSubmitted = true;
 
@@ -130,42 +130,9 @@ export class AudioGame {
     // Ensure a start time exists even if the user submits without typing.
     if (state.startTime === null) state.startTime = Date.now();
 
-    // When the task opts in via `includeTranscript`, save the stats together with
-    // both transcripts so the grader can compare them (as the original grader
-    // did); otherwise use the normal save flow in completion.js.
-    if (state.config.includeTranscript) {
-      await this._saveStatsWithTranscript();
-    }
+    // completion.js handles saving the stats (and, when the task opts into
+    // `includeTranscript`, the expected/submitted transcripts) for every mode.
     showCompletionScreen();
-  }
-
-  // Persist the numeric stats plus both transcripts to stats.txt. Reuses the
-  // shared saveStatistics for the numbers (so stats.js stays untouched), then
-  // appends the expected/submitted transcriptions so a grader can evaluate the
-  // actual transcription — not just the stats. completion.js skips its own save
-  // when this ran so it isn't overwritten. Gated by the `includeTranscript` flag.
-  async _saveStatsWithTranscript() {
-    const stats = calculateCompletionStats();
-    if (!stats) return;
-    try {
-      await saveStatistics(stats);
-      const base = await (await fetch('./stats.txt', { cache: 'no-store' })).text();
-      const transcripts =
-        `Expected Transcription:\n${state.originalText}\n\n` +
-        `Submitted Transcription:\n${this.typedText}\n\n`;
-      const marker = 'Generated:';
-      const idx = base.indexOf(marker);
-      const body = idx >= 0
-        ? base.slice(0, idx) + transcripts + base.slice(idx)
-        : base.replace(/\s*$/, '\n') + '\n' + transcripts;
-      await fetch('/save-stats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body
-      });
-    } catch (error) {
-      console.error('Could not save transcript:', error);
-    }
   }
 
   reset() {
