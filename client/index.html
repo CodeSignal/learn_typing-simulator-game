@@ -143,18 +143,14 @@
         </div>
         <!-- Audio Dictation View -->
         <div id="audio-container" class="audio-container" style="display: none;">
-          <audio id="audio-player" preload="auto"></audio>
           <div class="audio-dictation">
             <div class="audio-listen-panel">
-              <div class="audio-icon" aria-hidden="true">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                </svg>
-              </div>
               <p class="audio-instructions">Listen to the audio and type exactly what you hear.</p>
-              <div class="audio-controls">
+              <!-- Native audio player (play/pause, seek, elapsed / total time, volume, and
+                   playback speed via its menu), sized/tinted to fit the design system. -->
+              <audio id="audio-player" class="audio-player" controls controlsList="nodownload" preload="metadata"></audio>
+              <!-- Fallback controls, shown only when no clip URL is configured (speech synthesis). -->
+              <div id="audio-fallback" class="audio-controls" style="display: none;">
                 <button id="btn-audio-play" class="button button-primary" type="button">Play audio</button>
                 <button id="btn-audio-replay" class="button button-secondary" type="button">Replay</button>
               </div>

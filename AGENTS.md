@@ -16,6 +16,12 @@ The `allowMistakes` config flag (classic/text modes) toggles natural typing (wro
 characters are accepted and marked incorrect, completion is reaching the end of the
 text) versus the default guided mode (wrong keystrokes are rejected until corrected).
 
+The `includeTranscript` config flag (audio mode) makes the audio task append the
+expected and submitted transcriptions to `stats.txt` on submit (written by
+`client/games/audio-game.js`, keeping `stats.js` untouched; `completion.js` skips
+its own save so it isn't overwritten). A task-level `.codesignal` script surfaces
+those transcripts in STDOUT for the grader.
+
 ## Runtime Architecture
 
 - `client/index.html`: single-page shell with containers and controls for classic, racing, meteorite rain, and tower defense modes

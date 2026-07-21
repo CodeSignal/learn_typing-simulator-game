@@ -363,6 +363,20 @@
   margin: 0;
 }
 
+/* Native audio player, sized to the panel. Its internal controls are rendered
+   by the browser; only the outer element and (in WebKit/Blink) the panel
+   background can be themed, so we keep the styling light and rely on the
+   surrounding design-system card for the framing. */
+.bespoke .audio-player {
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--UI-Radius-radius-l);
+}
+
+.bespoke .audio-player::-webkit-media-controls-panel {
+  background: var(--Colors-Box-Background-Secondary);
+}
+
 .bespoke .audio-controls {
   display: flex;
   gap: var(--UI-Spacing-spacing-md);
