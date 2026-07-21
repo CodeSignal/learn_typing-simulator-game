@@ -19,7 +19,13 @@ async function saveCompletionStats(stats) {
   await saveStatistics(stats);
   if (!state.config.includeTranscript) return;
   try {
-    const base = await (await fetch('./stats.txt', { cache: 'no-store' })).text();
+    // fetch does not throw on HTTP errors; guard so we never append transcripts
+    // to an error page and write that back (the base stats were already saved).
+    const response = await fetch('./stats.txt', { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch stats.txt: ${response.status}`);
+    }
+    const base = await response.text();
     const transcripts =
       `Expected Transcription:\n${state.originalText}\n\n` +
       `Submitted Transcription:\n${state.typedText}\n\n`;
