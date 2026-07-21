@@ -38,7 +38,7 @@ Runtime behavior is controlled by `client/config.json`:
 - `allowMistakes`: when `true`, wrong characters are accepted (shown as incorrect) and typing continues instead of being rejected — natural typing where accuracy and "errors left" reflect real performance; completion is reaching the end of the text. Default `false` (guided mode: wrong keystrokes are rejected and must be corrected to advance).
 - `showStats`: show final stats dashboard
 - `realTimeStats`: enabled live metrics (`speed`, `accuracy`, `time`, `errors`, `errorsLeft`, `chars`)
-- `includeTranscript`: when `true` (audio mode), the saved `stats.txt` also includes the expected and submitted transcriptions, so a grader can compare the actual transcription (not just the numbers). Default `false`.
+- `includeTranscript`: when `true` (any mode), the saved `stats.txt` also includes the expected (reference) and submitted (typed) transcriptions, so a grader can compare the actual transcription — not just the numbers. Default `false`.
 - `racing`: mode-specific config (`opponentSpeeds`, `mistakesAllowed`)
 - `meteoriteRain`: mode-specific config (`meteoriteSpeed`, `spawnInterval`, `pointsPerChar`, `difficulty`)
 - `towerDefense`: mode-specific config (`initialLives`, `cellSize`, `enemySpawnInterval`, `enemySpeed`, `enemyHealth`)
