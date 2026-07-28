@@ -128,74 +128,74 @@ export function handleInput(e) {
     e.target.value = input;
   }
 
-  const inputLength = input.length;
-  const typedLength = state.typedText.length;
-
-  // Handle typing forward
-  if (inputLength > typedLength) {
-    const newChars = input.slice(typedLength);
-    let validInput = state.typedText; // Start with current valid text
-
-    for (let i = 0; i < newChars.length; i++) {
-      const charIndex = typedLength + i;
-      if (charIndex >= state.originalText.length) {
-        break;
-      }
-
-      const expectedChar = state.originalText[charIndex];
-      const typedChar = newChars[i];
-
-      state.totalInputs++; // Track total inputs
-
-      const isError = typedChar !== expectedChar;
-      if (isError) {
-        state.totalErrors++; // Track total errors
-
-        // Highlight keyboard key to show error
-        if (state.keyboardEnabled) {
-          highlightKey(typedChar, true);
-        }
-
-        if (state.config.allowMistakes && state.config.gameType !== 'racing') {
-          // Natural typing (non-racing): accept the wrong character (shown as
-          // incorrect) and keep going. It counts against accuracy and remains an
-          // "error left" until the user backspaces to fix it. Racing is excluded
-          // because its completion requires every character to be correct;
-          // accepting wrong characters there would soft-lock the finish.
-          validInput += typedChar;
-          state.charStates[charIndex] = 'incorrect';
-        } else {
-          // Guided mode: reject the incorrect character and stop so the user
-          // must correct it before advancing.
-          e.target.value = validInput;
-          input = validInput;
-          break; // Stop processing further characters
-        }
-      } else {
-        // Character is correct - add it to valid input
-        validInput += typedChar;
-        state.charStates[charIndex] = 'correct';
-
-        // Highlight keyboard key
-        if (state.keyboardEnabled) {
-          highlightKey(typedChar, false);
-        }
-      }
-    }
-    state.typedText = validInput;
+  // Editing commands (option+delete, cmd+z, arrow keys, clicking, select-and-
+  // retype) mean edits are not always appended at the end. Diffing by length and
+  // slicing the tail desyncs the moment the caret leaves the end — every keystroke
+  // then re-reads the same trailing character and the render drifts off-by-one.
+  // Instead, reconcile the whole state from the input's real value each event, and
+  // find the edited run by trimming the prefix and suffix that `input` still shares
+  // with the previous value. What remains in `input` (positions [start, endCur)) is
+  // the text this event inserted or substituted; each of those characters counts as
+  // one keystroke. This is robust to insertions, deletions, and same-length
+  // replacements alike, and needs no caret — which the value mutations above would
+  // have reset to the end anyway.
+  const prevTyped = state.typedText;
+  let start = 0;
+  const maxPrefix = Math.min(prevTyped.length, input.length);
+  while (start < maxPrefix && prevTyped[start] === input[start]) {
+    start++;
   }
-  // Handle backspace/delete
-  else if (inputLength < typedLength) {
-    state.typedText = input;
-    // Reset states for characters that are no longer typed
-    for (let i = inputLength; i < state.originalText.length; i++) {
-      if (i < state.charStates.length) {
-        state.charStates[i] = 'pending';
-      }
-    }
+  let endPrev = prevTyped.length;
+  let endCur = input.length;
+  while (endCur > start && endPrev > start && prevTyped[endPrev - 1] === input[endCur - 1]) {
+    endPrev--;
+    endCur--;
+  }
 
-    // Highlight backspace key (only if available)
-    if (state.keyboardEnabled && isKeyAvailable('backspace')) {
+  let lastInsertedChar = null;
+  let lastInsertedIsError = false;
+  for (let pos = start; pos < endCur && pos < state.originalText.length; pos++) {
+    state.totalInputs++;
+    const isError = input[pos] !== state.originalText[pos];
+    if (isError) {
+      state.totalErrors++;
+    }
+    lastInsertedChar = input[pos];
+    lastInsertedIsError = isError;
+  }
+
+  // Guided mode (no allowMistakes; also racing) rejects everything from the first
+  // character that doesn't match the expected text, so the user must fix it before
+  // advancing. Racing is always guided because its finish requires every character
+  // to be correct. Natural typing (allowMistakes, non-racing) keeps what was typed
+  // — wrong characters show as incorrect and stay an "error left" until fixed.
+  const naturalTyping = state.config.allowMistakes && state.config.gameType !== 'racing';
+  if (!naturalTyping) {
+    let correct = 0;
+    while (correct < input.length && input[correct] === state.originalText[correct]) {
+      correct++;
+    }
+    if (correct < input.length) {
+      input = input.slice(0, correct);
+      e.target.value = input;
+    }
+  }
+
+  // Reconcile tracked text and per-character states from the actual input value.
+  state.typedText = input;
+  for (let i = 0; i < state.originalText.length; i++) {
+    if (i < input.length) {
+      state.charStates[i] = input[i] === state.originalText[i] ? 'correct' : 'incorrect';
+    } else {
+      state.charStates[i] = 'pending';
+    }
+  }
+
+  // Highlight the keyboard for the most recent edit.
+  if (state.keyboardEnabled) {
+    if (lastInsertedChar !== null) {
+      highlightKey(lastInsertedChar, lastInsertedIsError);
+    } else if (input.length < prevTyped.length && isKeyAvailable('backspace')) {
       highlightKey('backspace', false);
     }
   }
