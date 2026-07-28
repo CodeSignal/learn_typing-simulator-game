@@ -30,6 +30,14 @@ export class AudioGame {
     this._onInput = this._onInput.bind(this);
     this._onPlay = this.play.bind(this);
     this._onSubmit = this.submit.bind(this);
+
+    // The clip is downloaded from a remote URL, which can take a moment; surface
+    // that in the status line so the user isn't staring at a silent player.
+    this._onLoadStart = () => this._updateStatus('Loading audio…');
+    this._onCanPlay = () => this._updateStatus('');
+    this._onWaiting = () => this._updateStatus('Buffering audio…');
+    this._onPlaying = () => this._updateStatus('');
+    this._onAudioError = () => this._updateStatus('Could not load the audio clip.');
   }
 
   initialize() {
@@ -39,11 +47,17 @@ export class AudioGame {
     if (classicContainer) classicContainer.style.display = 'none';
 
     if (this.hasAudioFile()) {
-      // Clip configured: use the native <audio controls> player.
+      // Clip configured: use the native <audio controls> player. Wire the load
+      // listeners before setting src so the initial "Loading audio…" is caught.
+      this.audioEl.addEventListener('loadstart', this._onLoadStart);
+      this.audioEl.addEventListener('canplay', this._onCanPlay);
+      this.audioEl.addEventListener('canplaythrough', this._onCanPlay);
+      this.audioEl.addEventListener('waiting', this._onWaiting);
+      this.audioEl.addEventListener('playing', this._onPlaying);
+      this.audioEl.addEventListener('error', this._onAudioError);
       this.audioEl.src = this._audioSrc();
       const rate = state.config.audio && state.config.audio.rate;
       if (typeof rate === 'number' && rate > 0) this.audioEl.playbackRate = rate;
-      this.audioEl.onerror = () => this._updateStatus('Could not load the audio clip.');
       this.audioEl.style.display = '';
       if (this.fallbackEl) this.fallbackEl.style.display = 'none';
     } else {
@@ -157,8 +171,10 @@ export class AudioGame {
   _resetStatus() {
     let message;
     if (this.hasAudioFile()) {
-      // The native player conveys playback state, so no status line is needed.
-      message = '';
+      // The native player conveys playback state once loaded; until the clip has
+      // buffered enough to play, show a loading hint (the download can be slow).
+      const ready = this.audioEl && this.audioEl.readyState >= 3; // HAVE_FUTURE_DATA
+      message = ready ? '' : 'Loading audio…';
     } else if (this.isSpeechSupported()) {
       message = 'Press "Play audio" to hear the text, then type what you hear.';
     } else {
@@ -176,6 +192,14 @@ export class AudioGame {
     if (this.playButton) this.playButton.removeEventListener('click', this._onPlay);
     if (this.replayButton) this.replayButton.removeEventListener('click', this._onPlay);
     if (this.submitButton) this.submitButton.removeEventListener('click', this._onSubmit);
+    if (this.audioEl) {
+      this.audioEl.removeEventListener('loadstart', this._onLoadStart);
+      this.audioEl.removeEventListener('canplay', this._onCanPlay);
+      this.audioEl.removeEventListener('canplaythrough', this._onCanPlay);
+      this.audioEl.removeEventListener('waiting', this._onWaiting);
+      this.audioEl.removeEventListener('playing', this._onPlaying);
+      this.audioEl.removeEventListener('error', this._onAudioError);
+    }
     this._stopPlayback();
   }
 }
