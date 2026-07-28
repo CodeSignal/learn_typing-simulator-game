@@ -266,6 +266,19 @@
   display: none;
 }
 
+/* Each character is its own span. The browser otherwise forms ligatures (e.g.
+   "fi", "fl", "ff") across adjacent character spans and collapses the second
+   glyph to zero width, dropping it visually ("finalized" renders as "fnalized").
+   A span only escaped this when the caret gave it position:relative, which is why
+   the missing letter reappeared as the cursor passed over it. Force every
+   character span to shape independently. */
+.bespoke .char-pending,
+.bespoke .char-correct,
+.bespoke .char-incorrect {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0;
+}
+
 .bespoke .typing-text .char-pending {
   color: var(--Colors-Text-Body-Light);
 }
