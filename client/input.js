@@ -128,37 +128,40 @@ export function handleInput(e) {
     e.target.value = input;
   }
 
-  // Editing commands that move the caret (option+delete, cmd+z, arrow keys,
-  // clicking) mean edits are not always appended at the end. Diffing by length
-  // and slicing the tail desyncs the moment the caret leaves the end — every
-  // keystroke then re-reads the same trailing character, and the render drifts
-  // off-by-one from what was actually typed. Instead, reconcile the whole state
-  // from the input's real value each event; the caret is used only to attribute
-  // the newly inserted characters to the stats counters.
+  // Editing commands (option+delete, cmd+z, arrow keys, clicking, select-and-
+  // retype) mean edits are not always appended at the end. Diffing by length and
+  // slicing the tail desyncs the moment the caret leaves the end — every keystroke
+  // then re-reads the same trailing character and the render drifts off-by-one.
+  // Instead, reconcile the whole state from the input's real value each event, and
+  // find the edited run by trimming the prefix and suffix that `input` still shares
+  // with the previous value. What remains in `input` (positions [start, endCur)) is
+  // the text this event inserted or substituted; each of those characters counts as
+  // one keystroke. This is robust to insertions, deletions, and same-length
+  // replacements alike, and needs no caret — which the value mutations above would
+  // have reset to the end anyway.
   const prevTyped = state.typedText;
-  const added = input.length - prevTyped.length;
-  const caret = typeof e.target.selectionStart === 'number'
-    ? e.target.selectionStart
-    : input.length;
+  let start = 0;
+  const maxPrefix = Math.min(prevTyped.length, input.length);
+  while (start < maxPrefix && prevTyped[start] === input[start]) {
+    start++;
+  }
+  let endPrev = prevTyped.length;
+  let endCur = input.length;
+  while (endCur > start && endPrev > start && prevTyped[endPrev - 1] === input[endCur - 1]) {
+    endPrev--;
+    endCur--;
+  }
 
-  // Count each newly inserted character as one keystroke (correct or not). The
-  // inserted run ends at the caret; pure deletions/undo add nothing.
   let lastInsertedChar = null;
   let lastInsertedIsError = false;
-  if (added > 0) {
-    for (let i = 0; i < added; i++) {
-      const pos = caret - added + i;
-      if (pos < 0 || pos >= state.originalText.length) {
-        continue;
-      }
-      state.totalInputs++;
-      const isError = input[pos] !== state.originalText[pos];
-      if (isError) {
-        state.totalErrors++;
-      }
-      lastInsertedChar = input[pos];
-      lastInsertedIsError = isError;
+  for (let pos = start; pos < endCur && pos < state.originalText.length; pos++) {
+    state.totalInputs++;
+    const isError = input[pos] !== state.originalText[pos];
+    if (isError) {
+      state.totalErrors++;
     }
+    lastInsertedChar = input[pos];
+    lastInsertedIsError = isError;
   }
 
   // Guided mode (no allowMistakes; also racing) rejects everything from the first
@@ -192,7 +195,7 @@ export function handleInput(e) {
   if (state.keyboardEnabled) {
     if (lastInsertedChar !== null) {
       highlightKey(lastInsertedChar, lastInsertedIsError);
-    } else if (added < 0 && isKeyAvailable('backspace')) {
+    } else if (input.length < prevTyped.length && isKeyAvailable('backspace')) {
       highlightKey('backspace', false);
     }
   }
