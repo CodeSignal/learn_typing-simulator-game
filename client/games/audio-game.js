@@ -38,6 +38,19 @@ export class AudioGame {
     this._onWaiting = () => this._updateStatus('Buffering audio…');
     this._onPlaying = () => this._updateStatus('');
     this._onAudioError = () => this._updateStatus('Could not load the audio clip.');
+
+    // A <audio> with preload other than "none" delays the document 'load' event
+    // until the clip buffers, and the task view only reveals the simulation once
+    // it loads — so an eagerly-preloaded remote clip makes the whole page wait on
+    // the download. We keep preload="none" (markup) so the page appears at once,
+    // then start the download ourselves after the page has loaded.
+    this._beginDownload = () => {
+      if (!this.audioEl) return;
+      try {
+        this.audioEl.preload = 'auto';
+        this.audioEl.load();
+      } catch (e) { /* ignore */ }
+    };
   }
 
   initialize() {
@@ -55,11 +68,20 @@ export class AudioGame {
       this.audioEl.addEventListener('waiting', this._onWaiting);
       this.audioEl.addEventListener('playing', this._onPlaying);
       this.audioEl.addEventListener('error', this._onAudioError);
-      this.audioEl.src = this._audioSrc();
+      this.audioEl.src = this._audioSrc();       // preload="none": no fetch yet
       const rate = state.config.audio && state.config.audio.rate;
       if (typeof rate === 'number' && rate > 0) this.audioEl.playbackRate = rate;
       this.audioEl.style.display = '';
       if (this.fallbackEl) this.fallbackEl.style.display = 'none';
+
+      // Start the download only after the page has loaded, so the clip never
+      // holds up the document 'load' event (and thus the sim appearing). The
+      // "Loading audio…" status then covers the background download.
+      if (document.readyState === 'complete') {
+        this._beginDownload();
+      } else {
+        window.addEventListener('load', this._beginDownload, { once: true });
+      }
     } else {
       // No clip: hide the native player and use the speech-synthesis fallback.
       if (this.audioEl) this.audioEl.style.display = 'none';
@@ -200,6 +222,7 @@ export class AudioGame {
       this.audioEl.removeEventListener('playing', this._onPlaying);
       this.audioEl.removeEventListener('error', this._onAudioError);
     }
+    window.removeEventListener('load', this._beginDownload);
     this._stopPlayback();
   }
 }
