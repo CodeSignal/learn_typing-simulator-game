@@ -43,7 +43,7 @@ transcripts in STDOUT for the grader.
 - `client/typing-simulator.css`: simulator visuals for all game modes
 - `client/help.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal component used by help modal flow
-- `client/help-content.html`: help guide loaded into the modal at runtime
+- `client/public/help-content.html`: help guide loaded into the modal at runtime (Vite copies it into `dist/`)
 - `client/config.json`: runtime feature toggles and mode parameters
 - `client/text-to-input.txt`: source text used for typing content/word pool
 - `server.js`: API server for `/save-stats` and production static hosting
@@ -80,7 +80,7 @@ npm run start:prod
 - Keep cross-cutting logic in the shared modules above; do NOT dump new behavior into `client/typing-simulator.js` unless it is truly initialization/orchestration code.
 - Keep mode-specific gameplay inside `client/games/` and shared behavior in the top-level client modules.
 - Preserve the `id` and class hooks used across `client/index.html`, `client/typing-simulator.js`, `client/help.js`, and the game modules.
-- If you change gameplay behavior, update both `README.md` and `client/help-content.html`.
+- If you change gameplay behavior, update both `README.md` and `client/public/help-content.html`.
 - If you add, remove, or rename client modules, update the runtime architecture sections in both this file and `README.md` in the same change.
 - If you change config keys or API payloads, update this file and README in the same change.
 - `client/app.css` contains shared shell styles; keep `client/index.html` and the design-system asset includes aligned to that file.
