@@ -15,11 +15,20 @@ export async function loadText() {
     if (!response.ok) {
       throw new Error('Failed to load text file');
     }
-    state.originalText = await response.text();
-    // Replace all newlines with spaces (for single-line display in racing mode)
-    state.originalText = state.originalText.replace(/\n/g, ' ');
-    // Trim trailing whitespace
-    state.originalText = state.originalText.trimEnd();
+    let raw = await response.text();
+    // Normalize line endings so \r\n / \r behave like \n.
+    raw = raw.replace(/\r\n?/g, '\n');
+    if (state.config.gameType === 'racing') {
+      // Racing is a single-line track — flatten newlines to spaces.
+      raw = raw.replace(/\n/g, ' ');
+    } else {
+      // Preserve paragraph breaks for multi-paragraph texts. Trim trailing spaces
+      // on each line and collapse 3+ blank lines to a single blank line so the
+      // reference stays clean and typeable.
+      raw = raw.replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n');
+    }
+    // Trim trailing whitespace/newlines from the whole passage.
+    state.originalText = raw.trimEnd();
 
     // Initialize character states
     state.charStates.length = 0;

@@ -39,10 +39,14 @@ Runtime behavior is controlled by `client/config.json`:
 - `showStats`: show final stats dashboard
 - `realTimeStats`: enabled live metrics (`speed`, `accuracy`, `time`, `errors`, `errorsLeft`, `chars`)
 - `includeTranscript`: when `true` (any mode), the saved `stats.txt` also includes the expected (reference) and submitted (typed) transcriptions, so a grader can compare the actual transcription — not just the numbers. Default `false`.
+- `gradeMode`: `"gist"` turns an `audio` task into a meeting-notes task graded on meaning, not verbatim match. The candidate captures the main points rather than transcribing exactly, so the accuracy/error stats are hidden (only Speed / Time show), and — with `includeTranscript` — `stats.txt` also carries a `Key Points:` block (from `keyPoints`) before the verbatim transcript so the grader can score coverage and verify captured facts. Default: normal verbatim grading.
+- `keyPoints`: array of strings (used with `gradeMode: "gist"`) — the reference key points/main ideas the notes should capture; emitted into `stats.txt` for the grader.
 - `racing`: mode-specific config (`opponentSpeeds`, `mistakesAllowed`)
 - `meteoriteRain`: mode-specific config (`meteoriteSpeed`, `spawnInterval`, `pointsPerChar`, `difficulty`)
 - `towerDefense`: mode-specific config (`initialLives`, `cellSize`, `enemySpawnInterval`, `enemySpeed`, `enemyHealth`)
-- `audio`: mode-specific config (`src` — URL of an audio/video clip to play; `rate` — playback rate, e.g. `0.9`)
+- `audio`: mode-specific config (`src` — URL of an audio/video clip to play; `rate` — playback rate, e.g. `0.9`; `maxPlays` — limit the number of times the clip can be played, e.g. `2` for a meeting-notes task; omit for unlimited)
+
+Text may contain multiple paragraphs: newlines in `text-to-input.txt` are preserved (blank lines separate paragraphs) for every mode except `racing`, which is a single-line track and flattens them to spaces.
 
 In `audio` mode the target text is not shown. A recorded clip from `audio.src` is
 played through the browser's native audio player — play/pause, seek, elapsed /
