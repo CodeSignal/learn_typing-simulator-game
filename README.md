@@ -66,7 +66,7 @@ numbers.
 - `client/app.css`: shared shell/layout styles
 - `client/help.js`: help modal bootstrap
 - `client/design-system/components/modal/modal.js`: design-system modal used for help
-- `client/help-content.html`: help text shown in the modal
+- `client/public/help-content.html`: help text shown in the modal (copied into `dist/` by Vite)
 - `client/text-to-input.txt`: source text used for typing
 - `server.js`: `/save-stats`, production static hosting
 - `extract_solution.py`: parses and prints `client/stats.txt`
@@ -79,5 +79,5 @@ numbers.
 
 ## Notes
 
-- Help content is loaded from `client/help-content.html` and shown via `Modal.createHelpModal` from the design system when `#btn-help` is clicked.
+- Help content is loaded from `client/public/help-content.html` (served as `/help-content.html`) and shown via `Modal.createHelpModal` from the design system when `#btn-help` is clicked.
 - In development, Vite serves static assets and proxies `/save-stats` to the API server.
