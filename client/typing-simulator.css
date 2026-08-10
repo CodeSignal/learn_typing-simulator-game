@@ -1123,6 +1123,59 @@
   z-index: 2;
 }
 
+.bespoke .meteorite-space-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--UI-Spacing-spacing-xs);
+  width: max-content;
+  padding: var(--UI-Spacing-spacing-xs) var(--UI-Spacing-spacing-sm);
+  color: #18213f;
+  background: linear-gradient(180deg, #ffffff 0%, #e8ecff 100%);
+  border: 1px solid rgba(184, 195, 255, 0.95);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 3px rgba(111, 133, 255, 0.2),
+    0 8px 24px rgba(4, 8, 24, 0.42);
+  font-family: var(--body-family);
+  font-size: var(--Fonts-Body-Default-xs);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - var(--UI-Spacing-spacing-s)));
+  animation: meteorite-space-pulse 900ms ease-in-out infinite;
+}
+
+.bespoke .meteorite-space-indicator[hidden] {
+  display: none;
+}
+
+.bespoke .meteorite-space-prompt {
+  margin-left: 3px;
+  font-size: var(--Fonts-Body-Default-xxs);
+}
+
+.bespoke .meteorite-space-key {
+  padding: 4px 7px;
+  color: #ffffff;
+  background: var(--Colors-Primary-Default);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 5px;
+  box-shadow: 0 2px 0 rgba(28, 37, 91, 0.55);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.bespoke .meteorite--awaiting-submit .meteorite-circle {
+  filter: drop-shadow(0 0 8px rgba(168, 181, 255, 0.95));
+}
+
 .bespoke .meteorite-circle {
   width: 40px;
   height: 40px;
@@ -1397,12 +1450,28 @@
   50% { opacity: 0.18; }
 }
 
+@keyframes meteorite-space-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 0 3px rgba(111, 133, 255, 0.2),
+      0 8px 24px rgba(4, 8, 24, 0.42);
+  }
+  50% {
+    opacity: 0.78;
+    box-shadow:
+      0 0 0 6px rgba(111, 133, 255, 0.08),
+      0 10px 28px rgba(4, 8, 24, 0.5);
+  }
+}
+
 .sg-beacon-a { animation: skyline-beacon 2.4s ease-in-out infinite; }
 .sg-beacon-b { animation: skyline-beacon 2.8s ease-in-out infinite 0.8s; }
 .sg-beacon-c { animation: skyline-beacon 3.1s ease-in-out infinite 1.5s; }
 
 @media (prefers-reduced-motion: reduce) {
   .bespoke .meteorite-rain-game::after,
+  .bespoke .meteorite-space-indicator,
   .sg-twinkle-a,
   .sg-twinkle-b,
   .sg-twinkle-c,
@@ -1411,6 +1480,10 @@
   .sg-beacon-b,
   .sg-beacon-c {
     animation: none !important;
+  }
+
+  .bespoke .meteorite--awaiting-submit .meteorite-circle {
+    filter: none;
   }
 }
 

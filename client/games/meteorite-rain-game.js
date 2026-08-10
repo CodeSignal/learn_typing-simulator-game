@@ -197,6 +197,24 @@ export class MeteoriteRainGame {
       wordElement.className = 'meteorite-word';
       wordElement.textContent = word;
 
+      const spaceIndicator = document.createElement('div');
+      spaceIndicator.className = 'meteorite-space-indicator';
+      spaceIndicator.hidden = true;
+      spaceIndicator.setAttribute('role', 'status');
+      spaceIndicator.setAttribute('aria-label', 'Word complete. Press Space to destroy this asteroid.');
+
+      const spacePrompt = document.createElement('span');
+      spacePrompt.className = 'meteorite-space-prompt';
+      spacePrompt.textContent = 'PRESS';
+
+      const spaceKey = document.createElement('kbd');
+      spaceKey.className = 'meteorite-space-key';
+      spaceKey.textContent = 'SPACE';
+
+      spaceIndicator.appendChild(spacePrompt);
+      spaceIndicator.appendChild(spaceKey);
+
+      meteorite.appendChild(spaceIndicator);
       meteorite.appendChild(circle);
       meteorite.appendChild(wordElement);
       this.playArea.appendChild(meteorite);
@@ -213,10 +231,12 @@ export class MeteoriteRainGame {
         word: word,
         y: 0,
         x: x,
-        speed: currentSpeed
+        speed: currentSpeed,
+        spaceIndicator: spaceIndicator
       };
 
       this.meteorites.push(meteoriteData);
+      this.updateSpaceIndicator();
     }
 
     updateMeteorites(currentTime) {
@@ -255,27 +275,49 @@ export class MeteoriteRainGame {
     destroyMeteorite(index) {
       const meteorite = this.meteorites[index];
       if (meteorite && meteorite.element && meteorite.element.parentNode) {
+        meteorite.element.classList.remove('meteorite--awaiting-submit');
+        if (meteorite.spaceIndicator) {
+          meteorite.spaceIndicator.hidden = true;
+        }
         meteorite.element.parentNode.removeChild(meteorite.element);
       }
       this.meteorites.splice(index, 1);
+      this.updateSpaceIndicator();
+    }
+
+    findMatchingMeteoriteIndex(typedWord) {
+      if (!typedWord || typedWord.length === 0) return -1;
+
+      const typedLower = typedWord.toLowerCase().trim();
+      return this.meteorites.findIndex(meteorite => (
+        meteorite.element?.isConnected && meteorite.word.toLowerCase() === typedLower
+      ));
+    }
+
+    updateSpaceIndicator() {
+      const matchingIndex = this.hasStarted && !this.isFinished
+        ? this.findMatchingMeteoriteIndex(this.currentTypedWord)
+        : -1;
+
+      this.meteorites.forEach((meteorite, index) => {
+        const shouldShow = index === matchingIndex;
+        meteorite.element?.classList.toggle('meteorite--awaiting-submit', shouldShow);
+        if (meteorite.spaceIndicator) {
+          meteorite.spaceIndicator.hidden = !shouldShow;
+        }
+      });
     }
 
     checkWordMatch(typedWord) {
-      if (!typedWord || typedWord.length === 0) return false;
+      const matchingIndex = this.findMatchingMeteoriteIndex(typedWord);
+      if (matchingIndex === -1) return false;
 
-      const typedLower = typedWord.toLowerCase().trim();
-
-      for (let i = 0; i < this.meteorites.length; i++) {
-        const meteorite = this.meteorites[i];
-        if (meteorite.word.toLowerCase() === typedLower) {
-          const points = meteorite.word.length * this.pointsPerChar;
-          this.score += points;
-          this.updateScore();
-          this.destroyMeteorite(i);
-          return true;
-        }
-      }
-      return false;
+      const meteorite = this.meteorites[matchingIndex];
+      const points = meteorite.word.length * this.pointsPerChar;
+      this.score += points;
+      this.updateScore();
+      this.destroyMeteorite(matchingIndex);
+      return true;
     }
 
     loseLife() {
@@ -287,6 +329,7 @@ export class MeteoriteRainGame {
 
     endGame() {
       this.isFinished = true;
+      this.updateSpaceIndicator();
 
       if (this.spawnIntervalId) {
         clearTimeout(this.spawnIntervalId);
@@ -331,6 +374,7 @@ export class MeteoriteRainGame {
 
     setTypedWord(word) {
       this.currentTypedWord = word;
+      this.updateSpaceIndicator();
     }
 
     beginGame() {

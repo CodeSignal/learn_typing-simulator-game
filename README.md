@@ -3,7 +3,7 @@
 Typing practice app with several modes:
 - `classic`: standard text typing
 - `racing`: race opponents while typing; the track follows the rendered passage and adapts when its container becomes visible or resizes
-- `meteoriteRain`: destroy falling word meteorites by typing them
+- `meteoriteRain`: type a falling meteorite's complete word, then press Space to submit it and destroy the meteorite
 - `towerDefense`: type prompted words to defeat enemies before they reach the castle
 - `audio`: the target text is spoken aloud (Web Speech API) and hidden; the user transcribes what they hear
 
