@@ -45,8 +45,20 @@ export class AudioGame {
     // playback starts from the beginning; resuming after a mid-clip pause does not.
     this.playsUsed = 0;
     this.listenInProgress = false;
+    this.furthestTime = 0;
     this._onAudioPlay = () => this._handlePlay();
     this._onAudioEnded = () => { this.listenInProgress = false; this._resetStatus(); };
+    // Prevent rewinding within a listen, so the play limit can't be bypassed by
+    // scrubbing back to re-hear the clip. Between listens (none in progress)
+    // seeking is allowed so the next play can start from the beginning.
+    this._onTimeUpdate = () => {
+      if (this.audioEl.currentTime > this.furthestTime) this.furthestTime = this.audioEl.currentTime;
+    };
+    this._onSeeking = () => {
+      if (this.listenInProgress && this.audioEl.currentTime < this.furthestTime - 0.5) {
+        try { this.audioEl.currentTime = this.furthestTime; } catch (e) { /* ignore */ }
+      }
+    };
 
     // A <audio> with preload other than "none" delays the document 'load' event
     // until the clip buffers, and the task view only reveals the simulation once
@@ -80,6 +92,8 @@ export class AudioGame {
       if (this._maxPlays()) {
         this.audioEl.addEventListener('play', this._onAudioPlay);
         this.audioEl.addEventListener('ended', this._onAudioEnded);
+        this.audioEl.addEventListener('timeupdate', this._onTimeUpdate);
+        this.audioEl.addEventListener('seeking', this._onSeeking);
       }
       this.audioEl.src = this._audioSrc();       // preload="none": no fetch yet
       const rate = state.config.audio && state.config.audio.rate;
@@ -123,17 +137,18 @@ export class AudioGame {
 
   _maxPlays() {
     const n = state.config.audio && state.config.audio.maxPlays;
-    return (typeof n === 'number' && n > 0) ? n : 0;
+    return (Number.isInteger(n) && n > 0) ? n : 0;
   }
 
-  // Enforce the listen limit. A fresh listen (playback starting from the
-  // beginning) consumes one play; resuming after a mid-clip pause does not. Once
-  // the limit is reached, further plays are blocked.
+  // Enforce the listen limit. A fresh listen — playback starting while none is in
+  // progress (the first play, or a play after the previous listen ended) —
+  // consumes one play; resuming after a mid-clip pause does not. Once the limit is
+  // reached, further plays are blocked. (Backward seeking within a listen is
+  // prevented separately so the limit can't be bypassed by scrubbing.)
   _handlePlay() {
     const max = this._maxPlays();
     if (!max) return;
-    const atStart = this.audioEl.currentTime < 0.3;
-    if (atStart && !this.listenInProgress) {
+    if (!this.listenInProgress) {
       if (this.playsUsed >= max) {
         this.audioEl.pause();
         try { this.audioEl.currentTime = 0; } catch (e) { /* ignore */ }
@@ -142,6 +157,7 @@ export class AudioGame {
       }
       this.playsUsed++;
       this.listenInProgress = true;
+      this.furthestTime = 0;
     }
     this._resetStatus();
   }
@@ -215,6 +231,7 @@ export class AudioGame {
     this.typedText = '';
     this.playsUsed = 0;
     this.listenInProgress = false;
+    this.furthestTime = 0;
     if (this.input) this.input.value = '';
     this._stopPlayback();
     this._resetStatus();
@@ -272,6 +289,8 @@ export class AudioGame {
       this.audioEl.removeEventListener('error', this._onAudioError);
       this.audioEl.removeEventListener('play', this._onAudioPlay);
       this.audioEl.removeEventListener('ended', this._onAudioEnded);
+      this.audioEl.removeEventListener('timeupdate', this._onTimeUpdate);
+      this.audioEl.removeEventListener('seeking', this._onSeeking);
     }
     window.removeEventListener('load', this._beginDownload);
     this._stopPlayback();

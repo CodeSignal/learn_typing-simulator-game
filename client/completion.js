@@ -29,8 +29,9 @@ async function saveCompletionStats(stats) {
     // Gist / meeting-notes mode grades on meaning coverage, so prepend the
     // authored key points. The verbatim transcript is still included so the
     // grader can verify captured facts (dates, numbers) against ground truth.
+    // Gist only applies to audio tasks.
     let keyPointsBlock = '';
-    if (state.config.gradeMode === 'gist') {
+    if (state.config.gameType === 'audio' && state.config.gradeMode === 'gist') {
       const kp = state.config.keyPoints;
       const kpText = Array.isArray(kp)
         ? kp.map(p => `- ${p}`).join('\n')
@@ -134,7 +135,7 @@ async function showStatsDashboard() {
     if (errorsEl) errorsEl.textContent = formatStatValue('errors', stats);
     if (errorsLeftEl) errorsLeftEl.textContent = formatStatValue('errorsLeft', stats);
 
-    if (state.config.gradeMode === 'gist') {
+    if (state.config.gameType === 'audio' && state.config.gradeMode === 'gist') {
       // Gist / meeting-notes: notes are graded on meaning coverage, not verbatim
       // match, so the accuracy/error stats (measured against the transcript) would
       // read misleadingly low. Hide them and keep Speed / Time.
