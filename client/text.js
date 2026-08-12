@@ -147,6 +147,10 @@ export function renderText() {
       displayChar = isRacing ? '\u00A0' : '<br>';
       if (isRacing) {
         className += ' char-space'; // Add class for newlines converted to spaces
+      } else {
+        // A newline has no visible glyph; the class lets CSS surface a marker
+        // when it is mistyped (see .char-incorrect.char-newline).
+        className += ' char-newline';
       }
     } else {
       displayChar = escapeHtml(char);
