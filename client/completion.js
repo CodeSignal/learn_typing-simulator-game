@@ -26,7 +26,20 @@ async function saveCompletionStats(stats) {
       throw new Error(`Failed to fetch stats.txt: ${response.status}`);
     }
     const base = await response.text();
+    // Gist / meeting-notes mode grades on meaning coverage, so prepend the
+    // authored key points. The verbatim transcript is still included so the
+    // grader can verify captured facts (dates, numbers) against ground truth.
+    // Gist only applies to audio tasks.
+    let keyPointsBlock = '';
+    if (state.config.gameType === 'audio' && state.config.gradeMode === 'gist') {
+      const kp = state.config.keyPoints;
+      const kpText = Array.isArray(kp)
+        ? kp.map(p => `- ${p}`).join('\n')
+        : (typeof kp === 'string' ? kp : '');
+      if (kpText) keyPointsBlock = `Key Points:\n${kpText}\n\n`;
+    }
     const transcripts =
+      keyPointsBlock +
       `Expected Transcription:\n${state.originalText}\n\n` +
       `Submitted Transcription:\n${state.typedText}\n\n`;
     const marker = 'Generated:';
@@ -122,9 +135,17 @@ async function showStatsDashboard() {
     if (errorsEl) errorsEl.textContent = formatStatValue('errors', stats);
     if (errorsLeftEl) errorsLeftEl.textContent = formatStatValue('errorsLeft', stats);
 
-    // In audio (dictation) mode the two error stats are edit distances against
-    // the hidden transcript, not keystroke errors, so relabel them accordingly.
-    if (state.config.gameType === 'audio') {
+    if (state.config.gameType === 'audio' && state.config.gradeMode === 'gist') {
+      // Gist / meeting-notes: notes are graded on meaning coverage, not verbatim
+      // match, so the accuracy/error stats (measured against the transcript) would
+      // read misleadingly low. Hide them and keep Speed / Time.
+      [accuracyEl, errorsEl, errorsLeftEl].forEach(el => {
+        const card = el && el.closest && el.closest('.stat-card');
+        if (card) card.style.display = 'none';
+      });
+    } else if (state.config.gameType === 'audio') {
+      // In audio (dictation) mode the two error stats are edit distances against
+      // the hidden transcript, not keystroke errors, so relabel them accordingly.
       const errorsLabel = errorsEl && errorsEl.closest('.stat-card') &&
         errorsEl.closest('.stat-card').querySelector('.stat-label');
       const errorsLeftLabel = errorsLeftEl && errorsLeftEl.closest('.stat-card') &&

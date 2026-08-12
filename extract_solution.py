@@ -112,6 +112,31 @@ def extract_stats():
     if 'generated' in stats:
         print(f"Generated: {stats['generated']}")
 
+    # Transcript blocks, present when the task enables includeTranscript. For a
+    # gist / meeting-notes task a "Key Points:" block is also written (the
+    # reference points the notes should capture); the verbatim transcript is kept
+    # so the grader can verify captured facts against ground truth.
+    key_points = re.search(
+        r'Key Points:\n(.*?)\n\n(?:Expected Transcription:|Generated:)', content, re.DOTALL)
+    if key_points:
+        print()
+        print("Key Points:")
+        print(key_points.group(1).strip())
+
+    expected = re.search(
+        r'Expected Transcription:\n(.*?)\n\n(?:Submitted Transcription:|Generated:)', content, re.DOTALL)
+    if expected:
+        print()
+        print("Expected Transcription:")
+        print(expected.group(1))
+
+    submitted = re.search(
+        r'Submitted Transcription:\n(.*?)\n\nGenerated:', content, re.DOTALL)
+    if submitted:
+        print()
+        print("Submitted Transcription:")
+        print(submitted.group(1))
+
     print()
 
 

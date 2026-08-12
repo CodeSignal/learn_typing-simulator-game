@@ -34,10 +34,31 @@ export class AudioGame {
     // The clip is downloaded from a remote URL, which can take a moment; surface
     // that in the status line so the user isn't staring at a silent player.
     this._onLoadStart = () => this._updateStatus('Loading audio…');
-    this._onCanPlay = () => this._updateStatus('');
+    this._onCanPlay = () => this._resetStatus();
     this._onWaiting = () => this._updateStatus('Buffering audio…');
-    this._onPlaying = () => this._updateStatus('');
+    this._onPlaying = () => this._resetStatus();
     this._onAudioError = () => this._updateStatus('Could not load the audio clip.');
+
+    // Optional listen limit (config.audio.maxPlays). For the gist / meeting-notes
+    // task the clip may be played only a couple of times, so the candidate has to
+    // capture the gist under realistic pressure. A "listen" is counted when
+    // playback starts from the beginning; resuming after a mid-clip pause does not.
+    this.playsUsed = 0;
+    this.listenInProgress = false;
+    this.furthestTime = 0;
+    this._onAudioPlay = () => this._handlePlay();
+    this._onAudioEnded = () => { this.listenInProgress = false; this._resetStatus(); };
+    // Prevent rewinding within a listen, so the play limit can't be bypassed by
+    // scrubbing back to re-hear the clip. Between listens (none in progress)
+    // seeking is allowed so the next play can start from the beginning.
+    this._onTimeUpdate = () => {
+      if (this.audioEl.currentTime > this.furthestTime) this.furthestTime = this.audioEl.currentTime;
+    };
+    this._onSeeking = () => {
+      if (this.listenInProgress && this.audioEl.currentTime < this.furthestTime - 0.5) {
+        try { this.audioEl.currentTime = this.furthestTime; } catch (e) { /* ignore */ }
+      }
+    };
 
     // A <audio> with preload other than "none" delays the document 'load' event
     // until the clip buffers, and the task view only reveals the simulation once
@@ -68,6 +89,12 @@ export class AudioGame {
       this.audioEl.addEventListener('waiting', this._onWaiting);
       this.audioEl.addEventListener('playing', this._onPlaying);
       this.audioEl.addEventListener('error', this._onAudioError);
+      if (this._maxPlays()) {
+        this.audioEl.addEventListener('play', this._onAudioPlay);
+        this.audioEl.addEventListener('ended', this._onAudioEnded);
+        this.audioEl.addEventListener('timeupdate', this._onTimeUpdate);
+        this.audioEl.addEventListener('seeking', this._onSeeking);
+      }
       this.audioEl.src = this._audioSrc();       // preload="none": no fetch yet
       const rate = state.config.audio && state.config.audio.rate;
       if (typeof rate === 'number' && rate > 0) this.audioEl.playbackRate = rate;
@@ -106,6 +133,33 @@ export class AudioGame {
 
   hasAudioFile() {
     return !!(this.audioEl && this._audioSrc());
+  }
+
+  _maxPlays() {
+    const n = state.config.audio && state.config.audio.maxPlays;
+    return (Number.isInteger(n) && n > 0) ? n : 0;
+  }
+
+  // Enforce the listen limit. A fresh listen — playback starting while none is in
+  // progress (the first play, or a play after the previous listen ended) —
+  // consumes one play; resuming after a mid-clip pause does not. Once the limit is
+  // reached, further plays are blocked. (Backward seeking within a listen is
+  // prevented separately so the limit can't be bypassed by scrubbing.)
+  _handlePlay() {
+    const max = this._maxPlays();
+    if (!max) return;
+    if (!this.listenInProgress) {
+      if (this.playsUsed >= max) {
+        this.audioEl.pause();
+        try { this.audioEl.currentTime = 0; } catch (e) { /* ignore */ }
+        this._resetStatus();
+        return;
+      }
+      this.playsUsed++;
+      this.listenInProgress = true;
+      this.furthestTime = 0;
+    }
+    this._resetStatus();
   }
 
   isSpeechSupported() {
@@ -175,6 +229,9 @@ export class AudioGame {
     this.hasSubmitted = false;
     this.hasPlayed = false;
     this.typedText = '';
+    this.playsUsed = 0;
+    this.listenInProgress = false;
+    this.furthestTime = 0;
     if (this.input) this.input.value = '';
     this._stopPlayback();
     this._resetStatus();
@@ -196,7 +253,16 @@ export class AudioGame {
       // The native player conveys playback state once loaded; until the clip has
       // buffered enough to play, show a loading hint (the download can be slow).
       const ready = this.audioEl && this.audioEl.readyState >= 3; // HAVE_FUTURE_DATA
-      message = ready ? '' : 'Loading audio…';
+      const max = this._maxPlays();
+      if (!ready) {
+        message = 'Loading audio…';
+      } else if (max) {
+        message = this.playsUsed >= max
+          ? `You have used all ${max} plays.`
+          : `Plays used: ${this.playsUsed} of ${max}.`;
+      } else {
+        message = '';
+      }
     } else if (this.isSpeechSupported()) {
       message = 'Press "Play audio" to hear the text, then type what you hear.';
     } else {
@@ -221,6 +287,10 @@ export class AudioGame {
       this.audioEl.removeEventListener('waiting', this._onWaiting);
       this.audioEl.removeEventListener('playing', this._onPlaying);
       this.audioEl.removeEventListener('error', this._onAudioError);
+      this.audioEl.removeEventListener('play', this._onAudioPlay);
+      this.audioEl.removeEventListener('ended', this._onAudioEnded);
+      this.audioEl.removeEventListener('timeupdate', this._onTimeUpdate);
+      this.audioEl.removeEventListener('seeking', this._onSeeking);
     }
     window.removeEventListener('load', this._beginDownload);
     this._stopPlayback();
