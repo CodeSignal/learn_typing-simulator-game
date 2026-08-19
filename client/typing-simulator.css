@@ -297,6 +297,18 @@
   padding: 0 2px;
 }
 
+/* A newline renders as <br>, which has no glyph to color — so a mistyped newline
+   would otherwise be invisible. Surface it with a small red return marker before
+   the break, mirroring the red block shown for a mistyped space. Correct and
+   not-yet-typed newlines just break the line with no marker. */
+.bespoke .typing-text .char-incorrect.char-newline::before {
+  content: '\21B5'; /* ↵ */
+  color: var(--Colors-Alert-Error-Default);
+  background-color: color-mix(in srgb, var(--Colors-Alert-Error-Default) 30%, transparent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
 .bespoke .typing-text .cursor-position {
   position: relative;
 }
