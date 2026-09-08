@@ -161,7 +161,7 @@ export class AudioGame {
       this.playsUsed++;
       this.listenInProgress = true;
       this.furthestTime = 0;
-      this._recordPlay();
+      this._reservePlay();
     }
     this._resetStatus();
   }
@@ -203,17 +203,39 @@ export class AudioGame {
       const response = await fetch('/plays', { cache: 'no-store' });
       if (!response.ok) return;
       const data = await response.json();
-      if (Number.isInteger(data.playsUsed) && data.playsUsed > this.playsUsed) {
+      if (data.unavailable) {
+        // The counter exists but cannot be trusted; fail closed rather than
+        // handing back a listen budget we cannot verify.
+        this.playsUsed = this._maxPlays();
+      } else if (Number.isInteger(data.playsUsed) && data.playsUsed > this.playsUsed) {
         this.playsUsed = data.playsUsed;
-        this._resetStatus();
       }
+      this._resetStatus();
     } catch (error) {
       // No server-side counter available; fall back to the in-memory count.
     }
   }
 
-  _recordPlay() {
-    fetch('/play', { method: 'POST' }).catch(() => { /* best effort */ });
+  // The server is the authority on whether a play is allowed. Playback starts
+  // optimistically and is stopped if the reservation is refused: resuming after
+  // an await would lose the user-gesture context and can be blocked outright by
+  // the browser's autoplay policy, which would break playback for everyone.
+  async _reservePlay() {
+    try {
+      const response = await fetch('/play', { method: 'POST' });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (Number.isInteger(data.playsUsed)) this.playsUsed = data.playsUsed;
+      if (data.allowed === false) {
+        if (data.unavailable) this.playsUsed = this._maxPlays();
+        this.listenInProgress = false;
+        this.audioEl.pause();
+        try { this.audioEl.currentTime = 0; } catch (e) { /* ignore */ }
+      }
+      this._resetStatus();
+    } catch (error) {
+      // Keep the local count; the next reservation reconciles with the server.
+    }
   }
 
   // Audio dictation still grades against the transcript, so it keeps the standard
