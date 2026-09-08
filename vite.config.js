@@ -11,6 +11,14 @@ export default defineConfig({
       '/save-stats': {
         target: 'http://localhost:3001',
         changeOrigin: true
+      },
+      '/play': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      },
+      '/plays': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
       }
     }
   },

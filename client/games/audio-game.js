@@ -9,7 +9,7 @@
 
 import { state } from '../state.js';
 import { updateRealtimeStats } from '../stats.js';
-import { showCompletionScreen } from '../completion.js';
+import { showCompletionScreen, showStatsDashboard } from '../completion.js';
 
 export class AudioGame {
   constructor() {
@@ -94,6 +94,9 @@ export class AudioGame {
         this.audioEl.addEventListener('ended', this._onAudioEnded);
         this.audioEl.addEventListener('timeupdate', this._onTimeUpdate);
         this.audioEl.addEventListener('seeking', this._onSeeking);
+        // The count lives on the server, so reloading the page does not hand the
+        // candidate a fresh listen budget.
+        this._loadPlaysUsed();
       }
       this.audioEl.src = this._audioSrc();       // preload="none": no fetch yet
       const rate = state.config.audio && state.config.audio.rate;
@@ -158,6 +161,7 @@ export class AudioGame {
       this.playsUsed++;
       this.listenInProgress = true;
       this.furthestTime = 0;
+      this._recordPlay();
     }
     this._resetStatus();
   }
@@ -192,6 +196,38 @@ export class AudioGame {
       console.error('Error playing audio:', error);
       this._updateStatus('Could not play audio.');
     }
+  }
+
+  async _loadPlaysUsed() {
+    try {
+      const response = await fetch('/plays', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (Number.isInteger(data.playsUsed) && data.playsUsed > this.playsUsed) {
+        this.playsUsed = data.playsUsed;
+        this._resetStatus();
+      }
+    } catch (error) {
+      // No server-side counter available; fall back to the in-memory count.
+    }
+  }
+
+  _recordPlay() {
+    fetch('/play', { method: 'POST' }).catch(() => { /* best effort */ });
+  }
+
+  // Audio dictation still grades against the transcript, so it keeps the standard
+  // dashboard; only the two error cards need mode-specific labels.
+  async renderResult() {
+    await showStatsDashboard();
+    const errorsEl = document.getElementById('stat-errors');
+    const errorsLeftEl = document.getElementById('stat-errors-left');
+    const labelOf = (el) => el && el.closest('.stat-card') &&
+      el.closest('.stat-card').querySelector('.stat-label');
+    const errorsLabel = labelOf(errorsEl);
+    const errorsLeftLabel = labelOf(errorsLeftEl);
+    if (errorsLabel) errorsLabel.textContent = 'Character errors';
+    if (errorsLeftLabel) errorsLeftLabel.textContent = 'Word errors';
   }
 
   _onInput(e) {
@@ -229,7 +265,8 @@ export class AudioGame {
     this.hasSubmitted = false;
     this.hasPlayed = false;
     this.typedText = '';
-    this.playsUsed = 0;
+    // playsUsed is deliberately NOT reset: the listen limit must survive a
+    // restart (and the server-side counter would contradict it anyway).
     this.listenInProgress = false;
     this.furthestTime = 0;
     if (this.input) this.input.value = '';

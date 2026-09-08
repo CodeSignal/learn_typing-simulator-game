@@ -44,6 +44,34 @@ function getStatsFilePath() {
     : path.join(CLIENT_DIR, 'stats.txt');
 }
 
+// Play counter for audio tasks that cap how many times the clip may be played.
+// It lives server-side (not in the browser) so reloading the page cannot hand
+// the candidate a fresh listen budget.
+function getPlaysFilePath() {
+  return isProduction
+    ? path.join(DIST_DIR, 'plays.json')
+    : path.join(CLIENT_DIR, 'plays.json');
+}
+
+function readPlaysUsed() {
+  try {
+    const raw = fs.readFileSync(getPlaysFilePath(), 'utf8');
+    const parsed = JSON.parse(raw);
+    return Number.isInteger(parsed.playsUsed) && parsed.playsUsed > 0 ? parsed.playsUsed : 0;
+  } catch (error) {
+    return 0; // no file yet, or unreadable: treat as no plays used
+  }
+}
+
+function writePlaysUsed(playsUsed) {
+  const playsPath = getPlaysFilePath();
+  const dir = path.dirname(playsPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(playsPath, JSON.stringify({ playsUsed }), 'utf8');
+}
+
 // Serve static files
 function serveFile(filePath, res) {
   fs.readFile(filePath, (err, data) => {
@@ -61,6 +89,22 @@ function serveFile(filePath, res) {
 
 // Handle POST requests
 function handlePostRequest(req, res, parsedUrl) {
+  if (parsedUrl.pathname === '/play') {
+    // Consume one play. Returns the running total so the client can enforce the
+    // configured limit even after a page reload.
+    try {
+      const playsUsed = readPlaysUsed() + 1;
+      writePlaysUsed(playsUsed);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ playsUsed }));
+    } catch (error) {
+      console.error('Error recording play:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to record play' }));
+    }
+    return;
+  }
+
   if (parsedUrl.pathname === '/save-stats') {
     let body = '';
 
@@ -101,6 +145,14 @@ const server = http.createServer((req, res) => {
   // Handle POST requests
   if (req.method === 'POST') {
     handlePostRequest(req, res, parsedUrl);
+    return;
+  }
+
+  // Report how many plays have been consumed so the client can restore the
+  // remaining listen budget after a reload.
+  if (parsedUrl.pathname === '/plays') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ playsUsed: readPlaysUsed() }));
     return;
   }
 

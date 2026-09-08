@@ -263,7 +263,10 @@ function buildStatsPrefix() {
   return '';
 }
 
-function serializeStatsText(stats) {
+// Standard stats.txt body. NOTE: the base task's extract_solution.py is a
+// whitelist parser — it prints only the fields it recognises, so a mode can omit
+// a line (e.g. Accuracy) simply by not emitting it.
+export function serializeStandardStats(stats) {
   return `${buildStatsPrefix()}Typing Statistics
 ==================
 
@@ -351,14 +354,16 @@ export function updateRealtimeStats() {
   }
 }
 
-export async function saveStatistics(stats) {
+// Write an already-serialized stats.txt body. Each mode owns its own payload
+// shape; this is just the transport.
+export async function postStatsText(body) {
   try {
     const response = await fetch('/save-stats', {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
       },
-      body: serializeStatsText(stats)
+      body
     });
 
     if (response.ok) {
