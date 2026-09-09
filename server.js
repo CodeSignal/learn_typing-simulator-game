@@ -61,13 +61,24 @@ function getConfigFilePath() {
     : path.join(CLIENT_DIR, 'config.json');
 }
 
+// Returns the configured limit, 0 when the task configures no limit, or null
+// when the configuration cannot be read. Null means "unknown", and callers must
+// fail closed: treating an unreadable config as unlimited would silently drop
+// the limit for a task that has one. (Only tasks that configure a limit ever
+// call /play, so failing closed cannot over-block an unlimited task.)
 function getMaxPlays() {
+  let raw;
   try {
-    const config = JSON.parse(fs.readFileSync(getConfigFilePath(), 'utf8'));
-    const max = config && config.audio && config.audio.maxPlays;
-    return Number.isInteger(max) && max > 0 ? max : 0; // 0 = unlimited
+    raw = fs.readFileSync(getConfigFilePath(), 'utf8');
   } catch (error) {
-    return 0;
+    return null;
+  }
+  try {
+    const config = JSON.parse(raw);
+    const max = config && config.audio && config.audio.maxPlays;
+    return Number.isInteger(max) && max > 0 ? max : 0;
+  } catch (error) {
+    return null;
   }
 }
 
@@ -128,8 +139,9 @@ function handlePostRequest(req, res, parsedUrl) {
       const maxPlays = getMaxPlays();
       const used = readPlaysUsed();
 
-      if (used === null) {
-        // Counter unreadable: fail closed rather than granting a free play.
+      if (used === null || maxPlays === null) {
+        // Counter or limit unreadable: fail closed rather than granting a free
+        // play. An unknown limit must never be treated as "unlimited".
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ allowed: false, unavailable: true, maxPlays }));
         return;
@@ -199,10 +211,11 @@ const server = http.createServer((req, res) => {
   // remaining listen budget after a reload.
   if (parsedUrl.pathname === '/plays') {
     const used = readPlaysUsed();
+    const max = getMaxPlays();
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(used === null
-      ? { unavailable: true, maxPlays: getMaxPlays() }
-      : { playsUsed: used, maxPlays: getMaxPlays() }));
+    res.end(JSON.stringify(used === null || max === null
+      ? { unavailable: true, maxPlays: max }
+      : { playsUsed: used, maxPlays: max }));
     return;
   }
 
