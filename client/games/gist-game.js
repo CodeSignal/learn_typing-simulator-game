@@ -68,8 +68,8 @@ Generated: ${new Date().toLocaleString()}
     if (!state.completionScreen) return;
     const heading = state.completionScreen.querySelector('h2');
     const message = state.completionScreen.querySelector('p');
-    if (heading) heading.textContent = 'Notes submitted';
-    if (message) message.textContent = 'Your notes have been recorded. You can now submit the task.';
+    if (heading) heading.style.display = 'none';
+    if (message) message.textContent = 'Your notes have been recorded.';
     const startOver = document.getElementById('btn-start-over');
     if (startOver) startOver.style.display = 'none';
     if (state.statsDashboard) state.statsDashboard.style.display = 'none';
