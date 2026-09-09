@@ -204,7 +204,145 @@ export function handleInput(e) {
   updateRealtimeStats();
 }
 
+// Word characters for word-wise deletion. Runs of these form one "word"; runs
+// of anything else (punctuation, symbols) form their own chunk, which is how
+// native editors treat `foo.bar` as three deletions rather than one.
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+
+// Start offset of the word-wise deletion that ends at `caret`, matching the
+// platform convention: swallow the whitespace right before the caret, then the
+// single chunk before that. Returns `caret` when there is nothing to delete.
+export function wordDeleteStart(value, caret) {
+  let i = caret;
+
+  // Whitespace immediately before the caret goes with the deletion, so
+  // "brown fox |" deletes back through "fox".
+  while (i > 0 && /\s/.test(value[i - 1])) {
+    i--;
+  }
+  if (i === 0) {
+    return 0;
+  }
+
+  const deletingWord = WORD_CHAR.test(value[i - 1]);
+  while (i > 0 && WORD_CHAR.test(value[i - 1]) === deletingWord && !/\s/.test(value[i - 1])) {
+    i--;
+  }
+
+  return i;
+}
+
+// Start offset of the visible row the caret sits on, or null when the passage
+// isn't rendered as characters (tower defense, audio) and there is no row to
+// measure. The platform derives "the line" from the field's own layout, which is
+// meaningless for the text modes: they type into a 0-width hidden textarea while
+// the passage the user actually reads is rendered elsewhere as one span per
+// character. So take the row from those spans — the row the caret is on is the
+// row the user sees, wherever the reference happens to wrap.
+function visibleRowStart(caret) {
+  const cursor = document.querySelector('.cursor-position');
+  const chars = cursor && cursor.parentElement && cursor.parentElement.children;
+  if (!chars || caret >= chars.length) {
+    return null;
+  }
+
+  // Round off sub-pixel layout noise so characters sharing a row compare equal.
+  const rowTop = Math.round(chars[caret].getBoundingClientRect().top);
+  let i = caret;
+  while (i > 0 && Math.round(chars[i - 1].getBoundingClientRect().top) === rowTop) {
+    i--;
+  }
+
+  return i;
+}
+
+// Start offset for a delete-to-start-of-line, preferring the rendered row and
+// falling back to the logical line (everything after the previous newline).
+function lineDeleteStart(field, caret) {
+  if (field === state.hiddenInput) {
+    const rowStart = visibleRowStart(caret);
+    if (rowStart !== null) {
+      return rowStart;
+    }
+  }
+
+  return field.value.lastIndexOf('\n', caret - 1) + 1;
+}
+
+function applyDelete(field, start, end) {
+  if (start >= end) {
+    return;
+  }
+
+  field.value = field.value.slice(0, start) + field.value.slice(end);
+  field.setSelectionRange(start, start);
+
+  if (state.keyboardEnabled && isKeyAvailable('backspace')) {
+    highlightKey('backspace', false);
+  }
+
+  // Mirrors the Tab handler below: the value was changed programmatically, so
+  // the consumers listening for `input` have to be told.
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+// Backspace chords: Option/Alt (or Ctrl on Windows/Linux) deletes the previous
+// word, Cmd deletes to the start of the line. Neither can be left to the browser
+// in the text modes, because `#hidden-input` is 0 pixels wide: with no usable
+// line box Blink's word delete collapses to the start of the line (wiping the
+// line instead of a word) and its delete-to-line-start collapses to a single
+// character. Routing both chords through here makes every typing surface behave
+// the same, off the layout the user is actually looking at.
+export function handleDeleteChord(e) {
+  if (e.key !== 'Backspace') {
+    return false;
+  }
+
+  const field = e.target;
+  if (!field || typeof field.value !== 'string') {
+    return false;
+  }
+
+  const wordDelete = (e.altKey || e.ctrlKey) && !e.metaKey;
+  // Cmd+Backspace only needs taking over on the hidden textarea. A real, visible
+  // text box (the audio/gist transcript) already deletes the row the user sees,
+  // so leave that one to the platform.
+  const lineDelete = e.metaKey && !e.altKey && !e.ctrlKey && field === state.hiddenInput;
+  if (!wordDelete && !lineDelete) {
+    return false;
+  }
+
+  // A task that restricts the keyboard still always allows backspace, but keep
+  // the chord honest about it rather than assuming.
+  if (!isKeyAvailable('Backspace')) {
+    e.preventDefault();
+    return true;
+  }
+
+  e.preventDefault();
+
+  const selectionStart = field.selectionStart ?? field.value.length;
+  const selectionEnd = field.selectionEnd ?? selectionStart;
+
+  // A selection deletes itself, exactly as a plain backspace would.
+  if (selectionStart !== selectionEnd) {
+    applyDelete(field, selectionStart, selectionEnd);
+    return true;
+  }
+
+  const start = wordDelete
+    ? wordDeleteStart(field.value, selectionStart)
+    : lineDeleteStart(field, selectionStart);
+  applyDelete(field, start, selectionStart);
+
+  return true;
+}
+
 export function handleKeyDown(e) {
+  if (handleDeleteChord(e)) {
+    return;
+  }
+
   // Special handling for tower defense game
   if (state.config.gameType === 'towerDefense' && state.currentGame) {
     // If input is not focused and user starts typing, focus it
