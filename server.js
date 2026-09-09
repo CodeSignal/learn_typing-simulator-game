@@ -44,6 +44,76 @@ function getStatsFilePath() {
     : path.join(CLIENT_DIR, 'stats.txt');
 }
 
+// Play counter for audio tasks that cap how many times the clip may be played.
+// It lives server-side (not in the browser) so reloading the page cannot hand
+// the candidate a fresh listen budget.
+function getPlaysFilePath() {
+  return isProduction
+    ? path.join(DIST_DIR, 'plays.json')
+    : path.join(CLIENT_DIR, 'plays.json');
+}
+
+// The server is the authority on the limit too: config.json is on disk here, so
+// the browser cannot raise its own cap by editing the copy it was served.
+function getConfigFilePath() {
+  return isProduction
+    ? path.join(DIST_DIR, 'config.json')
+    : path.join(CLIENT_DIR, 'config.json');
+}
+
+// Returns the configured limit, 0 when the task configures no limit, or null
+// when the configuration cannot be read. Null means "unknown", and callers must
+// fail closed: treating an unreadable config as unlimited would silently drop
+// the limit for a task that has one. (Only tasks that configure a limit ever
+// call /play, so failing closed cannot over-block an unlimited task.)
+function getMaxPlays() {
+  let raw;
+  try {
+    raw = fs.readFileSync(getConfigFilePath(), 'utf8');
+  } catch (error) {
+    return null;
+  }
+  try {
+    const config = JSON.parse(raw);
+    const max = config && config.audio && config.audio.maxPlays;
+    return Number.isInteger(max) && max > 0 ? max : 0;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Returns the number of plays consumed, or null when the counter exists but
+// cannot be trusted. A missing file means "none used yet"; corrupt data must NOT
+// silently become 0, or a damaged file would hand back the whole listen budget.
+function readPlaysUsed() {
+  let raw;
+  try {
+    raw = fs.readFileSync(getPlaysFilePath(), 'utf8');
+  } catch (error) {
+    return error.code === 'ENOENT' ? 0 : null;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Number.isInteger(parsed.playsUsed) || parsed.playsUsed < 0) return null;
+    return parsed.playsUsed;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Write to a sibling temp file and rename, so an interrupted write can never
+// leave a truncated plays.json behind (rename is atomic on the same filesystem).
+function writePlaysUsed(playsUsed) {
+  const playsPath = getPlaysFilePath();
+  const dir = path.dirname(playsPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  const tempPath = path.join(dir, `.plays.${process.pid}.tmp`);
+  fs.writeFileSync(tempPath, JSON.stringify({ playsUsed }), 'utf8');
+  fs.renameSync(tempPath, playsPath);
+}
+
 // Serve static files
 function serveFile(filePath, res) {
   fs.readFile(filePath, (err, data) => {
@@ -61,6 +131,39 @@ function serveFile(filePath, res) {
 
 // Handle POST requests
 function handlePostRequest(req, res, parsedUrl) {
+  if (parsedUrl.pathname === '/play') {
+    // Reserve one play. This is the authority: it decides against the limit in
+    // config.json on disk, so a stale client, a second tab, or a dropped request
+    // cannot push playback past the cap.
+    try {
+      const maxPlays = getMaxPlays();
+      const used = readPlaysUsed();
+
+      if (used === null || maxPlays === null) {
+        // Counter or limit unreadable: fail closed rather than granting a free
+        // play. An unknown limit must never be treated as "unlimited".
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ allowed: false, unavailable: true, maxPlays }));
+        return;
+      }
+      if (maxPlays && used >= maxPlays) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ allowed: false, playsUsed: used, maxPlays }));
+        return;
+      }
+
+      const playsUsed = used + 1;
+      writePlaysUsed(playsUsed);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ allowed: true, playsUsed, maxPlays }));
+    } catch (error) {
+      console.error('Error recording play:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to record play' }));
+    }
+    return;
+  }
+
   if (parsedUrl.pathname === '/save-stats') {
     let body = '';
 
@@ -101,6 +204,18 @@ const server = http.createServer((req, res) => {
   // Handle POST requests
   if (req.method === 'POST') {
     handlePostRequest(req, res, parsedUrl);
+    return;
+  }
+
+  // Report how many plays have been consumed so the client can restore the
+  // remaining listen budget after a reload.
+  if (parsedUrl.pathname === '/plays') {
+    const used = readPlaysUsed();
+    const max = getMaxPlays();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(used === null || max === null
+      ? { unavailable: true, maxPlays: max }
+      : { playsUsed: used, maxPlays: max }));
     return;
   }
 

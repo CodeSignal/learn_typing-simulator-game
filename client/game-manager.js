@@ -7,6 +7,7 @@ import { ClassicGame } from './games/classic-game.js';
 import { MeteoriteRainGame } from './games/meteorite-rain-game.js';
 import { TowerDefenseGame } from './games/tower-defense-game.js';
 import { AudioGame } from './games/audio-game.js';
+import { GistGame } from './games/gist-game.js';
 
 const GAME_CONTAINERS = [
   'classic-typing-container',
@@ -67,7 +68,9 @@ export function initializeGame() {
   } else if (gameType === 'towerDefense') {
     state.currentGame = new TowerDefenseGame();
   } else if (gameType === 'audio') {
-    state.currentGame = new AudioGame();
+    // Gist / meeting-notes is an audio variant: same playback and listen limit,
+    // different results (see GistGame).
+    state.currentGame = state.config.gradeMode === 'gist' ? new GistGame() : new AudioGame();
   } else {
     state.currentGame = new ClassicGame();
   }

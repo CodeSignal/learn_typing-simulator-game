@@ -1,239 +1,135 @@
-// completion.js — completion screen and stats dashboard display
+// completion.js — orchestrates end-of-task saving and result display.
+//
+// Modes own their own results. A game class may implement any of:
+//   serializeStats(stats) -> string   the stats.txt body for that mode
+//   renderResult(stats)               what the candidate sees when finished
+//   allowsRestart() -> boolean        false hides the restart / Start Over controls
+// Anything not implemented falls back to the standard behaviour below, so only
+// modes that genuinely differ carry any code.
 
 import { state } from './state.js';
 import {
   calculateCompletionStats,
   createEmptyStatistics,
   formatStatValue,
-  saveStatistics,
-  parseStatsText
+  parseStatsText,
+  postStatsText
 } from './stats.js';
 import { hideAllGameContainers } from './game-manager.js';
+import { buildStandardPayload } from './results/standard-result.js';
 
-// Save the completion stats, and — when the task sets `includeTranscript` (any
-// mode) — append the expected and submitted transcripts so a grader can compare
-// the actual transcription, not just the numbers. The transcripts are added on
-// top of the shared serializer's output (read back and re-posted) so stats.js
-// stays untouched.
-async function saveCompletionStats(stats) {
-  await saveStatistics(stats);
-  if (!state.config.includeTranscript) return;
-  try {
-    // fetch does not throw on HTTP errors; guard so we never append transcripts
-    // to an error page and write that back (the base stats were already saved).
-    const response = await fetch('./stats.txt', { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch stats.txt: ${response.status}`);
-    }
-    const base = await response.text();
-    // Gist / meeting-notes mode grades on meaning coverage, so prepend the
-    // authored key points. The verbatim transcript is still included so the
-    // grader can verify captured facts (dates, numbers) against ground truth.
-    // Gist only applies to audio tasks.
-    let keyPointsBlock = '';
-    if (state.config.gameType === 'audio' && state.config.gradeMode === 'gist') {
-      const kp = state.config.keyPoints;
-      const kpText = Array.isArray(kp)
-        ? kp.map(p => `- ${p}`).join('\n')
-        : (typeof kp === 'string' ? kp : '');
-      if (kpText) keyPointsBlock = `Key Points:\n${kpText}\n\n`;
-    }
-    const transcripts =
-      keyPointsBlock +
-      `Expected Transcription:\n${state.originalText}\n\n` +
-      `Submitted Transcription:\n${state.typedText}\n\n`;
-    const marker = 'Generated:';
-    const idx = base.indexOf(marker);
-    const body = idx >= 0
-      ? base.slice(0, idx) + transcripts + base.slice(idx)
-      : base.replace(/\s*$/, '\n') + '\n' + transcripts;
-    await fetch('/save-stats', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body
-    });
-  } catch (error) {
-    console.error('Could not save transcript:', error);
-  }
+export function gameAllowsRestart() {
+  const game = state.currentGame;
+  return game && typeof game.allowsRestart === 'function' ? game.allowsRestart() : true;
 }
 
-// Load and display stats dashboard
-async function showStatsDashboard() {
+// Shared teardown: leave only the result view on screen.
+function prepareResultView() {
   hideAllGameContainers();
 
-  // Hide the restart button when dashboard is shown
-  if (state.restartButton && state.restartButton.parentElement) {
-    state.restartButton.parentElement.style.display = 'none';
-  }
-
-  // Hide keyboard when dashboard is shown
-  if (state.keyboardContainer) {
-    state.keyboardContainer.classList.remove('visible');
-  }
-
-  // Hide real-time stats when dashboard is shown
-  if (state.realtimeStatsContainer) {
-    state.realtimeStatsContainer.style.display = 'none';
-  }
+  if (state.keyboardContainer) state.keyboardContainer.classList.remove('visible');
+  if (state.realtimeStatsContainer) state.realtimeStatsContainer.style.display = 'none';
   if (state.realtimeStatsInterval) {
     clearInterval(state.realtimeStatsInterval);
     state.realtimeStatsInterval = null;
   }
-
-  // Hide keyboard-stats-wrapper when dashboard is shown
-  if (state.keyboardStatsWrapper) {
-    state.keyboardStatsWrapper.style.display = 'none';
+  if (state.keyboardStatsWrapper) state.keyboardStatsWrapper.style.display = 'none';
+  if (state.restartButton && state.restartButton.parentElement) {
+    state.restartButton.parentElement.style.display = 'none';
   }
+  if (state.hiddenInput) state.hiddenInput.blur();
+}
 
-  // Hide completion screen if visible
-  if (state.completionScreen) {
-    state.completionScreen.style.display = 'none';
-  }
+// The standard stats dashboard. Exported so a mode can reuse it and then adjust
+// (see AudioGame, which relabels the error cards).
+export async function showStatsDashboard() {
+  prepareResultView();
+  if (state.completionScreen) state.completionScreen.style.display = 'none';
 
   try {
     const response = await fetch('./stats.txt');
-    let stats = null;
+    const stats = response.ok
+      ? parseStatsText(await response.text())
+      : createEmptyStatistics();
 
-    if (response.ok) {
-      const statsText = await response.text();
-      stats = parseStatsText(statsText);
-    } else {
-      console.warn('Stats file not found, using default values');
-      stats = createEmptyStatistics();
-    }
+    const dashboardHeader = state.statsDashboard
+      ? state.statsDashboard.querySelector('.stats-dashboard-header h2')
+      : null;
+    if (dashboardHeader) dashboardHeader.textContent = resultHeading();
 
-    // Update dashboard header based on game type
-    const dashboardHeader = state.statsDashboard ? state.statsDashboard.querySelector('.stats-dashboard-header h2') : null;
-    if (dashboardHeader) {
-      if (state.config.gameType === 'meteoriteRain' && state.currentGame) {
-        // Show final score for meteorite rain
-        const score = state.currentGame.getScore ? state.currentGame.getScore() : 0;
-        dashboardHeader.textContent = `Final Score: ${score}`;
-      } else if (state.config.gameType === 'racing' && state.currentGame && state.currentGame.playerWon !== null) {
-        if (state.currentGame.playerWon === true) {
-          dashboardHeader.textContent = 'Victory 🏅';
-        } else if (state.currentGame.playerWon === false) {
-          dashboardHeader.textContent = 'You lost! 😢';
-        } else {
-          dashboardHeader.textContent = 'Typing Statistics'; // Fallback
-        }
-      } else {
-        dashboardHeader.textContent = 'Typing Statistics'; // Default for non-racing games
-      }
-    }
+    const cells = {
+      speed: document.getElementById('stat-speed'),
+      accuracy: document.getElementById('stat-accuracy'),
+      time: document.getElementById('stat-time'),
+      errors: document.getElementById('stat-errors'),
+      errorsLeft: document.getElementById('stat-errors-left')
+    };
+    Object.entries(cells).forEach(([key, el]) => {
+      if (el) el.textContent = formatStatValue(key, stats);
+    });
 
-    // Update dashboard with stats
-    const speedEl = document.getElementById('stat-speed');
-    const accuracyEl = document.getElementById('stat-accuracy');
-    const timeEl = document.getElementById('stat-time');
-    const errorsEl = document.getElementById('stat-errors');
-    const errorsLeftEl = document.getElementById('stat-errors-left');
-
-    if (speedEl) speedEl.textContent = formatStatValue('speed', stats);
-    if (accuracyEl) accuracyEl.textContent = formatStatValue('accuracy', stats);
-    if (timeEl) timeEl.textContent = formatStatValue('time', stats);
-    if (errorsEl) errorsEl.textContent = formatStatValue('errors', stats);
-    if (errorsLeftEl) errorsLeftEl.textContent = formatStatValue('errorsLeft', stats);
-
-    if (state.config.gameType === 'audio' && state.config.gradeMode === 'gist') {
-      // Gist / meeting-notes: notes are graded on meaning coverage, not verbatim
-      // match, so the accuracy/error stats (measured against the transcript) would
-      // read misleadingly low. Hide them and keep Speed / Time.
-      [accuracyEl, errorsEl, errorsLeftEl].forEach(el => {
-        const card = el && el.closest && el.closest('.stat-card');
-        if (card) card.style.display = 'none';
-      });
-    } else if (state.config.gameType === 'audio') {
-      // In audio (dictation) mode the two error stats are edit distances against
-      // the hidden transcript, not keystroke errors, so relabel them accordingly.
-      const errorsLabel = errorsEl && errorsEl.closest('.stat-card') &&
-        errorsEl.closest('.stat-card').querySelector('.stat-label');
-      const errorsLeftLabel = errorsLeftEl && errorsLeftEl.closest('.stat-card') &&
-        errorsLeftEl.closest('.stat-card').querySelector('.stat-label');
-      if (errorsLabel) errorsLabel.textContent = 'Character errors';
-      if (errorsLeftLabel) errorsLeftLabel.textContent = 'Word errors';
-    }
-
-    // Show dashboard
-    if (state.statsDashboard) {
-      state.statsDashboard.style.display = 'flex';
-    }
-
-    if (state.hiddenInput) {
-      state.hiddenInput.blur();
-    }
+    if (state.statsDashboard) state.statsDashboard.style.display = 'flex';
   } catch (error) {
     console.error('Error loading stats:', error);
-    // Fall back to simple completion screen
-    // Keyboard is already hidden above
-    if (state.completionScreen) {
-      state.completionScreen.style.display = 'flex';
-    }
+    if (state.completionScreen) state.completionScreen.style.display = 'flex';
   }
 }
 
-export function showCompletionScreen() {
-  // Hide stats dashboard if visible
-  if (state.statsDashboard) {
-    state.statsDashboard.style.display = 'none';
+function resultHeading() {
+  const game = state.currentGame;
+  if (state.config.gameType === 'meteoriteRain' && game) {
+    return `Final Score: ${game.getScore ? game.getScore() : 0}`;
   }
+  if (state.config.gameType === 'racing' && game && game.playerWon !== null) {
+    if (game.playerWon === true) return 'Victory 🏅';
+    if (game.playerWon === false) return 'You lost! 😢';
+  }
+  return 'Typing Statistics';
+}
 
+function shouldShowDashboard() {
+  const isMeteorite = state.config.gameType === 'meteoriteRain';
+  const isRacing = state.config.gameType === 'racing' && state.currentGame;
+  return state.config.showStats === true ||
+    (isRacing && state.currentGame.playerWon !== null) ||
+    isMeteorite;
+}
+
+async function renderDefaultResult() {
+  if (shouldShowDashboard()) {
+    setTimeout(() => showStatsDashboard(), 200);
+    return;
+  }
+  prepareResultView();
+  if (state.completionScreen) state.completionScreen.style.display = 'flex';
+}
+
+export function showCompletionScreen() {
+  if (state.statsDashboard) state.statsDashboard.style.display = 'none';
   if (!state.completionScreen) {
     console.error('Completion screen element not found');
     return;
   }
 
-  hideAllGameContainers();
+  prepareResultView();
 
-  // Hide keyboard when completion screen is shown
-  if (state.keyboardContainer) {
-    state.keyboardContainer.classList.remove('visible');
-  }
-
-  // Hide real-time stats when completion screen is shown
-  if (state.realtimeStatsContainer) {
-    state.realtimeStatsContainer.style.display = 'none';
-  }
-  if (state.realtimeStatsInterval) {
-    clearInterval(state.realtimeStatsInterval);
-    state.realtimeStatsInterval = null;
-  }
-
-  // Hide keyboard-stats-wrapper when completion screen is shown
-  if (state.keyboardStatsWrapper) {
-    state.keyboardStatsWrapper.style.display = 'none';
-  }
-
-  // Hide the restart button when completion screen is shown
-  if (state.restartButton && state.restartButton.parentElement) {
-    state.restartButton.parentElement.style.display = 'none';
-  }
-
-  // Calculate and save statistics
+  const game = state.currentGame;
   const stats = calculateCompletionStats();
-  const isMeteoriteRainGame = state.config.gameType === 'meteoriteRain';
+  const render = () => (game && typeof game.renderResult === 'function')
+    ? game.renderResult(stats)
+    : renderDefaultResult();
 
-  // For racing game or meteorite rain, show dashboard even if stats are null
-  const isRacingGame = state.config.gameType === 'racing' && state.currentGame;
-  const shouldShowDashboard = state.config.showStats === true || (isRacingGame && state.currentGame.playerWon !== null) || isMeteoriteRainGame;
-
-  if (stats) {
-    saveCompletionStats(stats).then(() => {
-      if (shouldShowDashboard) {
-        setTimeout(() => showStatsDashboard(), 200);
-      } else {
-        if (state.realtimeStatsContainer) state.realtimeStatsContainer.style.display = 'none';
-        state.completionScreen.style.display = 'flex';
-        if (state.hiddenInput) state.hiddenInput.blur();
-      }
-    });
-  } else {
-    if (shouldShowDashboard) {
-      setTimeout(() => showStatsDashboard(), 200);
-    } else {
-      if (state.realtimeStatsContainer) state.realtimeStatsContainer.style.display = 'none';
-      state.completionScreen.style.display = 'flex';
-      if (state.hiddenInput) state.hiddenInput.blur();
-    }
+  if (!stats) {
+    render();
+    return;
   }
+
+  const payload = (game && typeof game.serializeStats === 'function')
+    ? game.serializeStats(stats)
+    : buildStandardPayload(stats);
+
+  postStatsText(payload).then(render, (error) => {
+    console.error('Could not save statistics:', error);
+    render();
+  });
 }

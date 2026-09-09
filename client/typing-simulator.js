@@ -8,6 +8,7 @@ import { handleInput, handleKeyDown } from './input.js';
 import { updateRealtimeStats } from './stats.js';
 import { restart } from './restart.js';
 import { initializeGame } from './game-manager.js';
+import { gameAllowsRestart } from './completion.js';
 
 async function initialize() {
   // Load config first
@@ -30,6 +31,19 @@ async function initialize() {
 
   // Initialize game based on config
   initializeGame();
+
+  // Modes that disallow restarting (e.g. the one-shot meeting-notes task) hide
+  // the restart controls entirely, so a candidate cannot clear their work or
+  // attempt the task again.
+  if (!gameAllowsRestart()) {
+    if (state.restartButton && state.restartButton.parentElement) {
+      state.restartButton.parentElement.style.display = 'none';
+    }
+    ['btn-start-over', 'btn-stats-start-over'].forEach((id) => {
+      const button = document.getElementById(id);
+      if (button) button.style.display = 'none';
+    });
+  }
 
   // Initialize keyboard
   initializeKeyboard();

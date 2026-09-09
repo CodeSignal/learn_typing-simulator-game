@@ -5,3 +5,7 @@ dist/
 *.txt
 .claude
 .cursor
+# runtime artifact: server-side audio play counter
+plays.json
+client/plays.json
+dist/plays.json
