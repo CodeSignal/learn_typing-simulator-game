@@ -191,7 +191,12 @@ export function handleInput(e) {
     }
   }
 
-  // Highlight the keyboard for the most recent edit.
+  renderText();
+  updateRealtimeStats();
+
+  // Highlight the keyboard for the most recent edit. This runs last on purpose:
+  // the on-screen keyboard is decoration, and it must never be able to keep the
+  // typed text and the stats from being painted.
   if (state.keyboardEnabled) {
     if (lastInsertedChar !== null) {
       highlightKey(lastInsertedChar, lastInsertedIsError);
@@ -199,9 +204,6 @@ export function handleInput(e) {
       highlightKey('backspace', false);
     }
   }
-
-  renderText();
-  updateRealtimeStats();
 }
 
 // Word characters for word-wise deletion. Runs of these form one "word"; runs

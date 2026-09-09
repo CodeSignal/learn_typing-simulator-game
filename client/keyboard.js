@@ -11,6 +11,17 @@ const keyboardLayout = [
   ['space']
 ];
 
+// Shifted characters share a physical key with their unshifted twin, which is
+// what the layout above renders. Map them back so typing `"` or `(` highlights
+// the key the user actually pressed instead of nothing.
+const shiftedKeys = {
+  '~': '`', '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
+  '^': '6', '&': '7', '*': '8', '(': '9', ')': '0', '_': '-', '+': '=',
+  '{': '[', '}': ']', '|': '\\',
+  ':': ';', '"': "'",
+  '<': ',', '>': '.', '?': '/'
+};
+
 // Map special keys to display names
 const keyDisplayNames = {
   'backspace': '⌫',
@@ -73,8 +84,11 @@ function getKeyElement(char) {
     return state.keyboardContainer.querySelector('[data-key="tab"]');
   }
 
-  // Find regular key
-  return state.keyboardContainer.querySelector(`[data-key="${normalizedChar}"]`);
+  // Find regular key. The character goes through CSS.escape because it lands in
+  // a selector: `"` and `\` would otherwise build an invalid one and throw,
+  // which used to abort the caller mid-keystroke.
+  const keyChar = shiftedKeys[normalizedChar] || normalizedChar;
+  return state.keyboardContainer.querySelector(`[data-key="${CSS.escape(keyChar)}"]`);
 }
 
 // Highlight a key on the keyboard
