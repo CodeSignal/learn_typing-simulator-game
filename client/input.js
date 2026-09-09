@@ -232,23 +232,18 @@ export function wordDeleteStart(value, caret) {
   return i;
 }
 
-// Start offset of the visible row the caret sits on, or null when the passage
-// isn't rendered as characters (tower defense, audio) and there is no row to
-// measure. The platform derives "the line" from the field's own layout, which is
-// meaningless for the text modes: they type into a 0-width hidden textarea while
-// the passage the user actually reads is rendered elsewhere as one span per
-// character. So take the row from those spans — the row the caret is on is the
-// row the user sees, wherever the reference happens to wrap.
-function visibleRowStart(caret) {
-  const cursor = document.querySelector('.cursor-position');
-  const chars = cursor && cursor.parentElement && cursor.parentElement.children;
-  if (!chars || caret >= chars.length) {
+// Start offset of the visible row `rowIndex` sits on, or null when the passage
+// has no layout to measure — it is hidden once the stats dashboard takes over
+// after completion, and every rect would then read as zero, which would collapse
+// the row onto the whole passage.
+function visibleRowStart(chars, rowIndex) {
+  if (!chars[rowIndex].parentElement.getClientRects().length) {
     return null;
   }
 
   // Round off sub-pixel layout noise so characters sharing a row compare equal.
-  const rowTop = Math.round(chars[caret].getBoundingClientRect().top);
-  let i = caret;
+  const rowTop = Math.round(chars[rowIndex].getBoundingClientRect().top);
+  let i = rowIndex;
   while (i > 0 && Math.round(chars[i - 1].getBoundingClientRect().top) === rowTop) {
     i--;
   }
@@ -256,14 +251,25 @@ function visibleRowStart(caret) {
   return i;
 }
 
-// Start offset for a delete-to-start-of-line, preferring the rendered row and
-// falling back to the logical line (everything after the previous newline).
+// Start offset for a delete-to-start-of-line. The platform derives "the line"
+// from the field's own layout, which is meaningless for the text modes: they
+// type into a 0-width hidden textarea while the passage the user actually reads
+// is rendered elsewhere as one span per character. So take the row from those
+// spans, and fall back to the logical line only in the modes that render no
+// passage at all (tower defense, meteorite rain).
 function lineDeleteStart(field, caret) {
-  if (field === state.hiddenInput) {
-    const rowStart = visibleRowStart(caret);
-    if (rowStart !== null) {
-      return rowStart;
-    }
+  const cursor = field === state.hiddenInput ? document.querySelector('.cursor-position') : null;
+  const chars = cursor && cursor.parentElement && cursor.parentElement.children;
+
+  if (chars && chars.length) {
+    // A caret one past the last span means the passage is fully typed and the
+    // render stopped before appending the trailing cursor span, because
+    // completion returns early; the final character is then the caret's row.
+    const rowStart = visibleRowStart(chars, Math.min(caret, chars.length - 1));
+
+    // An unmeasurable passage has no visible row to delete back to, so leave the
+    // text alone rather than guessing at one.
+    return rowStart === null ? caret : rowStart;
   }
 
   return field.value.lastIndexOf('\n', caret - 1) + 1;
