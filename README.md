@@ -48,6 +48,24 @@ Runtime behavior is controlled by `client/config.json`:
 
 Text may contain multiple paragraphs: newlines in `text-to-input.txt` are preserved (blank lines separate paragraphs) for every mode except `racing`, which is a single-line track and flattens them to spaces.
 
+Backspace chords are handled by the app rather than left to the browser
+(`handleDeleteChord` in `client/input.js`):
+
+- **Option/Alt+Backspace** (Ctrl+Backspace on Windows/Linux) deletes the previous
+  word — the whitespace before the caret plus the word or punctuation run in
+  front of it.
+- **Cmd+Backspace** deletes to the start of the visible line.
+
+This is deliberate rather than defensive. The text modes type into
+`#hidden-input`, which is 0 pixels wide, and with no usable line box Chrome's own
+word-delete collapses to the start of the line (wiping the line instead of a
+word) while its delete-to-line-start collapses to a single character. Cmd+Backspace
+additionally has to measure "the line" from the rendered passage (one `<span>` per
+character, so the row is read off the layout the user is actually looking at)
+rather than from the hidden textarea, since the two wrap in completely different
+places. The audio/gist transcript box is a real, visible textarea, so it keeps the
+platform's own Cmd+Backspace and only borrows the word-delete chord.
+
 In `audio` mode the target text is not shown. A recorded clip from `audio.src` is
 played through the browser's native audio player — play/pause, seek, elapsed /
 total time, volume, and playback speed (via its overflow menu) — and the user

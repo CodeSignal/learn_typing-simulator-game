@@ -9,6 +9,7 @@
 
 import { state } from '../state.js';
 import { updateRealtimeStats } from '../stats.js';
+import { handleDeleteChord } from '../input.js';
 import { showCompletionScreen, showStatsDashboard } from '../completion.js';
 
 export class AudioGame {
@@ -121,6 +122,9 @@ export class AudioGame {
     if (this.input) {
       this.input.value = '';
       this.input.addEventListener('input', this._onInput);
+      // The transcript box is free-form, so it takes only the word-delete chord
+      // from the shared keydown handling rather than the whole guided flow.
+      this.input.addEventListener('keydown', handleDeleteChord);
     }
     // The custom Play/Replay buttons only drive the speech-synthesis fallback.
     if (this.playButton) this.playButton.addEventListener('click', this._onPlay);
@@ -335,7 +339,10 @@ export class AudioGame {
   }
 
   destroy() {
-    if (this.input) this.input.removeEventListener('input', this._onInput);
+    if (this.input) {
+      this.input.removeEventListener('input', this._onInput);
+      this.input.removeEventListener('keydown', handleDeleteChord);
+    }
     if (this.playButton) this.playButton.removeEventListener('click', this._onPlay);
     if (this.replayButton) this.replayButton.removeEventListener('click', this._onPlay);
     if (this.submitButton) this.submitButton.removeEventListener('click', this._onSubmit);
