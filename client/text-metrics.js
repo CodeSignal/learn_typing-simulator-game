@@ -319,15 +319,33 @@ export function countUnfixedErrors(metric, typed, reference) {
 // metric. `before` and `after` are the field's value either side of one input
 // event, which is how the simulator accrues "Total Errors Made".
 export function countNewErrors(metric, before, after, reference) {
-  if (after.length <= before.length) return 0;
-
   if (normalizeErrorMetric(metric) === 'positional') {
+    // The characters this event actually introduced are what is left of `after`
+    // once the prefix and suffix it still shares with `before` are trimmed —
+    // the same diff handleInput uses. Keying off the length instead would miss
+    // a same-length edit: selecting a correct character and typing a wrong one
+    // over it is a mistake, and one the typist is charged a keystroke for.
+    let start = 0;
+    const shared = Math.min(before.length, after.length);
+    while (start < shared && before[start] === after[start]) start++;
+
+    let endBefore = before.length;
+    let endAfter = after.length;
+    while (endAfter > start && endBefore > start && before[endBefore - 1] === after[endAfter - 1]) {
+      endBefore--;
+      endAfter--;
+    }
+
     let errors = 0;
-    for (let i = before.length; i < after.length && i < reference.length; i++) {
-      if (after[i] !== reference[i]) errors++;
+    for (let i = start; i < endAfter; i++) {
+      // Past the end of the reference there is nothing to be right about, which
+      // is how markPositional treats it too.
+      if (i >= reference.length || after[i] !== reference[i]) errors++;
     }
     return errors;
   }
+
+  if (after === before) return 0;
 
   // Under an alignment metric, typing on past an earlier slip adds no further
   // errors — only the slip itself counts, however late it is noticed.
