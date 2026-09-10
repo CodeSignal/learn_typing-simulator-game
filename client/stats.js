@@ -1,6 +1,7 @@
 // stats.js — statistics calculation, display, saving, parsing, and formatting
 
 import { state } from './state.js';
+import { countUnfixedErrors } from './text-metrics.js';
 
 function createCharsProgress(typed = 0, total = state.originalText.length) {
   return { typed, total };
@@ -25,16 +26,12 @@ function getElapsedSeconds(startTime, now = Date.now()) {
   return Math.max(0, (now - startTime) / 1000);
 }
 
+// Errors still standing in the submitted text. Under the default 'positional'
+// metric this is the count of mismatched positions, as it always was; the
+// alignment metrics instead charge one error per genuine slip rather than one
+// per position knocked out of step by it (see text-metrics.js).
 function countErrorsLeft() {
-  let errorsLeft = 0;
-
-  for (let i = 0; i < state.charStates.length; i++) {
-    if (state.charStates[i] === 'incorrect') {
-      errorsLeft++;
-    }
-  }
-
-  return errorsLeft;
+  return countUnfixedErrors(state.config.errorMetric, state.typedText, state.originalText);
 }
 
 function calculateAccuracy(totalInputs, totalErrors) {
