@@ -258,23 +258,17 @@ function markWord(typed, reference) {
       continue;
     }
 
-    // Within a paired token the comparison is positional, which is what keeps a
-    // slip contained: it cannot escape the word it happened in.
-    const shared = Math.min(refToken.length, typedToken.length);
-    for (let i = 0; i < shared; i++) {
-      ops.push({ op: refToken[i] === typedToken[i] ? 'match' : 'substitute', char: refToken[i] });
-    }
+    // Characters are aligned within the pair, not compared by position: a
+    // letter dropped from the middle of a word should cost that one letter
+    // rather than reddening everything after it. The alignment cannot escape
+    // the token, which is what keeps a slip contained to its word.
+    const inner = alignToPrefix(typedToken, refToken);
+    for (let i = 0; i < inner.ops.length; i++) ops.push(inner.ops[i]);
 
-    if (typedToken.length < refToken.length) {
-      // The token being typed right now is unfinished, not wrong.
-      const unfinished = p === lastReached;
-      for (let i = shared; i < refToken.length; i++) {
-        ops.push({ op: unfinished ? 'pending' : 'missing', char: refToken[i] });
-      }
-    } else {
-      for (let i = shared; i < typedToken.length; i++) {
-        ops.push({ op: 'extra', char: typedToken[i] });
-      }
+    // The token being typed right now is unfinished, not wrong.
+    const unfinished = p === lastReached;
+    for (let i = inner.consumed; i < refToken.length; i++) {
+      ops.push({ op: unfinished ? 'pending' : 'missing', char: refToken[i] });
     }
   }
 
