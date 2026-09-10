@@ -164,29 +164,110 @@ function tokenize(text) {
   return text.length ? text.match(/\s+|\S+/g) : [];
 }
 
+const isGap = (token) => /^\s/.test(token);
+
+// Pair up two token streams. Pairing token k with token k would only work while
+// both streams agree on where the spaces are: type "checkfirst;" instead of
+// "check first;" and every later word is compared against the wrong one, which
+// is the character-level cascade all over again, one level up. Aligning the
+// streams keeps a whitespace slip local, like any other slip. A word is never
+// paired with a gap, so the two never swap roles.
+function alignTokens(typedTokens, refTokens) {
+  const n = typedTokens.length;
+  const m = refTokens.length;
+  const INF = 0x3fffffff;
+  const width = m + 1;
+  const cost = new Int32Array((n + 1) * width);
+
+  for (let i = 0; i <= n; i++) cost[i * width] = i;
+  for (let j = 0; j <= m; j++) cost[j] = j;
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const t = typedTokens[i - 1];
+      const r = refTokens[j - 1];
+      const substitute = isGap(t) === isGap(r)
+        ? cost[(i - 1) * width + (j - 1)] + (t === r ? 0 : 1)
+        : INF;
+      cost[i * width + j] = Math.min(
+        substitute,
+        cost[(i - 1) * width + j] + 1,   // token typed that the reference lacks
+        cost[i * width + (j - 1)] + 1    // reference token never typed
+      );
+    }
+  }
+
+  // Stop at the reference token the typing actually reached. Charging for the
+  // untyped remainder would make it cheaper to pair the last typed token with
+  // the last reference token and call everything in between skipped.
+  let best = 0;
+  for (let j = 0; j <= m; j++) {
+    if (cost[n * width + j] <= cost[n * width + best]) best = j;
+  }
+
+  const pairs = [];
+  let i = n;
+  let j = best;
+  while (i > 0 || j > 0) {
+    const t = i > 0 ? typedTokens[i - 1] : null;
+    const r = j > 0 ? refTokens[j - 1] : null;
+    const pairable = t !== null && r !== null && isGap(t) === isGap(r);
+
+    if (pairable && cost[i * width + j] === cost[(i - 1) * width + (j - 1)] + (t === r ? 0 : 1)) {
+      pairs.push({ typed: t, ref: r });
+      i--;
+      j--;
+    } else if (t !== null && cost[i * width + j] === cost[(i - 1) * width + j] + 1) {
+      pairs.push({ typed: t, ref: null });
+      i--;
+    } else if (r !== null) {
+      pairs.push({ typed: null, ref: r });
+      j--;
+    } else {
+      pairs.push({ typed: t, ref: null });
+      i--;
+    }
+  }
+  pairs.reverse();
+
+  return { pairs, consumed: best };
+}
+
 function markWord(typed, reference) {
   const refTokens = tokenize(reference);
-  const typedTokens = tokenize(typed);
+  const { pairs, consumed } = alignTokens(tokenize(typed), refTokens);
   const ops = [];
 
-  for (let k = 0; k < refTokens.length; k++) {
-    const refToken = refTokens[k];
-    const typedToken = typedTokens[k];
+  // The last pair holding a typed token is the one still being typed.
+  let lastReached = -1;
+  for (let p = 0; p < pairs.length; p++) {
+    if (pairs[p].typed !== null) lastReached = p;
+  }
 
-    if (typedToken === undefined) {
-      for (let i = 0; i < refToken.length; i++) ops.push({ op: 'pending', char: refToken[i] });
+  for (let p = 0; p < pairs.length; p++) {
+    const { typed: typedToken, ref: refToken } = pairs[p];
+
+    if (refToken === null) {
+      for (let i = 0; i < typedToken.length; i++) ops.push({ op: 'extra', char: typedToken[i] });
       continue;
     }
 
-    // Comparison never escapes the token, so a slip cannot cascade past it.
+    if (typedToken === null) {
+      const op = p > lastReached ? 'pending' : 'missing';
+      for (let i = 0; i < refToken.length; i++) ops.push({ op, char: refToken[i] });
+      continue;
+    }
+
+    // Within a paired token the comparison is positional, which is what keeps a
+    // slip contained: it cannot escape the word it happened in.
     const shared = Math.min(refToken.length, typedToken.length);
     for (let i = 0; i < shared; i++) {
       ops.push({ op: refToken[i] === typedToken[i] ? 'match' : 'substitute', char: refToken[i] });
     }
 
     if (typedToken.length < refToken.length) {
-      // The last token typed may simply be unfinished rather than wrong.
-      const unfinished = k === typedTokens.length - 1;
+      // The token being typed right now is unfinished, not wrong.
+      const unfinished = p === lastReached;
       for (let i = shared; i < refToken.length; i++) {
         ops.push({ op: unfinished ? 'pending' : 'missing', char: refToken[i] });
       }
@@ -194,6 +275,13 @@ function markWord(typed, reference) {
       for (let i = shared; i < typedToken.length; i++) {
         ops.push({ op: 'extra', char: typedToken[i] });
       }
+    }
+  }
+
+  // Whatever the typing has not got to yet.
+  for (let k = consumed; k < refTokens.length; k++) {
+    for (let i = 0; i < refTokens[k].length; i++) {
+      ops.push({ op: 'pending', char: refTokens[k][i] });
     }
   }
 
