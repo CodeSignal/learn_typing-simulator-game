@@ -20,8 +20,9 @@ The `markingMode` config flag (text modes) chooses how typed text is compared wi
 the reference *on screen*: `positional` (default, the original behaviour — one span
 per reference character, right or wrong at a fixed index), `character` (Levenshtein
 alignment, so a skipped or added character costs one character rather than shifting
-every position after it), or `word` (realign at each space, so a slip is contained to
-its word). The alignment modes can produce two marks positional comparison cannot
+every position after it), or `word` (realign on runs of word characters and runs of
+separators — spaces and punctuation alike — so a slip is contained to the run it
+happened in). The alignment modes can produce two marks positional comparison cannot
 express, `char-missing` and `char-extra`.
 
 The `errorMetric` config flag (text modes) chooses the same three comparisons for the

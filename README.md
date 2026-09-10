@@ -52,8 +52,10 @@ Text may contain multiple paragraphs: newlines in `text-to-input.txt` are preser
   `positional` (default) is the original behaviour — one span per reference
   character, right or wrong at a fixed index. `character` aligns the two strings
   (Levenshtein), so a skipped or added character costs one character instead of
-  shifting every position after it. `word` realigns at each space, containing a
-  slip to its own word. The alignment modes produce two marks positional
+  shifting every position after it. `word` cuts the text into runs of word characters
+  and runs of separators (spaces and punctuation alike) and realigns those,
+  containing a slip to the run it happened in. A dash typed where a space
+  belongs pairs with that space, costing one substitution. The alignment modes produce two marks positional
   comparison cannot express: a skipped reference character (`char-missing`,
   underlined) and an added character with no reference position (`char-extra`,
   struck through).

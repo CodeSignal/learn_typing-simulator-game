@@ -12,7 +12,7 @@
 // hundreds. Aligning the two strings instead costs one error for one slip,
 // which is what the text-entry literature's error rates assume — but as a live
 // display it can also reinterpret text behind the cursor, which word alignment
-// avoids by resynchronising at every space.
+// avoids by resynchronising at every word and separator boundary.
 //
 // Everything in this module is pure: no state, no DOM.
 
@@ -158,20 +158,24 @@ function markCharacter(typed, reference) {
   return ops;
 }
 
-// Words and the whitespace between them, both kept, so the reference can be
-// rebuilt from the tokens in order.
+// Runs of word characters, and runs of everything else — spaces and
+// punctuation alike — kept in order so the reference can be rebuilt from them.
+// Cutting only on whitespace would glue "check-first" into a single token and
+// leave it to pair against "check"; splitting the separators out instead lets
+// the dash pair with the space it was typed in place of, which costs one
+// substitution rather than a word's worth of extras.
 function tokenize(text) {
-  return text.length ? text.match(/\s+|\S+/g) : [];
+  return text.length ? text.match(/[\p{L}\p{N}_]+|[^\p{L}\p{N}_]+/gu) : [];
 }
 
-const isGap = (token) => /^\s/.test(token);
+// A word never pairs with a separator, so the two cannot swap roles.
+const isSeparator = (token) => !/[\p{L}\p{N}_]/u.test(token);
 
 // Pair up two token streams. Pairing token k with token k would only work while
 // both streams agree on where the spaces are: type "checkfirst;" instead of
 // "check first;" and every later word is compared against the wrong one, which
 // is the character-level cascade all over again, one level up. Aligning the
-// streams keeps a whitespace slip local, like any other slip. A word is never
-// paired with a gap, so the two never swap roles.
+// streams keeps a separator slip local, like any other slip.
 function alignTokens(typedTokens, refTokens) {
   const n = typedTokens.length;
   const m = refTokens.length;
@@ -186,7 +190,7 @@ function alignTokens(typedTokens, refTokens) {
     for (let j = 1; j <= m; j++) {
       const t = typedTokens[i - 1];
       const r = refTokens[j - 1];
-      const substitute = isGap(t) === isGap(r)
+      const substitute = isSeparator(t) === isSeparator(r)
         ? cost[(i - 1) * width + (j - 1)] + (t === r ? 0 : 1)
         : INF;
       cost[i * width + j] = Math.min(
@@ -211,7 +215,7 @@ function alignTokens(typedTokens, refTokens) {
   while (i > 0 || j > 0) {
     const t = i > 0 ? typedTokens[i - 1] : null;
     const r = j > 0 ? refTokens[j - 1] : null;
-    const pairable = t !== null && r !== null && isGap(t) === isGap(r);
+    const pairable = t !== null && r !== null && isSeparator(t) === isSeparator(r);
 
     if (pairable && cost[i * width + j] === cost[(i - 1) * width + (j - 1)] + (t === r ? 0 : 1)) {
       pairs.push({ typed: t, ref: r });
