@@ -48,6 +48,30 @@ Runtime behavior is controlled by `client/config.json`:
 
 Text may contain multiple paragraphs: newlines in `text-to-input.txt` are preserved (blank lines separate paragraphs) for every mode except `racing`, which is a single-line track and flattens them to spaces.
 
+- `markingMode`: how typed text is compared with the reference **on screen**.
+  `positional` (default) is the original behaviour — one span per reference
+  character, right or wrong at a fixed index. `character` aligns the two strings
+  (Levenshtein), so a skipped or added character costs one character instead of
+  shifting every position after it. `word` cuts the text into runs of word characters
+  and runs of separators (spaces and punctuation alike) and realigns those,
+  containing a slip to the run it happened in. A dash typed where a space
+  belongs pairs with that space, costing one substitution. The alignment modes produce two marks positional
+  comparison cannot express: a skipped reference character (`char-missing`,
+  underlined) and an added character with no reference position (`char-extra`,
+  struck through).
+- `errorMetric`: the same three comparisons applied to the **numbers** —
+  "Errors Left (Unfixed)" and "Total Errors Made". Independent of `markingMode`,
+  so a task can show word alignment while scoring by character alignment. All
+  three count in characters, so thresholds keep their meaning. Default
+  `positional`.
+
+Both default to `positional`, so existing courses render and score exactly as
+before, and an unrecognised value falls back to it with a console warning. The
+difference is not small: on the 1,489-character runbook passage, one omitted
+character at index 100 counts as **1** error under `character`, **3** under
+`word`, and **1,358** under `positional`, because every position after the slip
+is out of step. See `client/text-metrics.js`.
+
 Backspace chords are handled by the app rather than left to the browser
 (`handleDeleteChord` in `client/input.js`):
 
@@ -83,6 +107,7 @@ numbers.
 
 - `client/index.html`: app shell and mode containers
 - `client/typing-simulator.js`: core gameplay and stats logic
+- `client/text-metrics.js`: pure text-comparison helpers shared by rendering and scoring (positional, character alignment, word alignment)
 - `client/games/`: per-mode implementations (`classic-game.js`, `racing-game.js`, `meteorite-rain-game.js`, `tower-defense-game.js`, `audio-game.js`)
 - `client/typing-simulator.css`: gameplay styles
 - `client/app.css`: shared shell/layout styles

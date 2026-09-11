@@ -16,6 +16,22 @@ The `allowMistakes` config flag (classic/text modes) toggles natural typing (wro
 characters are accepted and marked incorrect, completion is reaching the end of the
 text) versus the default guided mode (wrong keystrokes are rejected until corrected).
 
+The `markingMode` config flag (text modes) chooses how typed text is compared with
+the reference *on screen*: `positional` (default, the original behaviour — one span
+per reference character, right or wrong at a fixed index), `character` (Levenshtein
+alignment, so a skipped or added character costs one character rather than shifting
+every position after it), or `word` (realign on runs of word characters and runs of
+separators — spaces and punctuation alike — so a slip is contained to the run it
+happened in). The alignment modes can produce two marks positional comparison cannot
+express, `char-missing` and `char-extra`.
+
+The `errorMetric` config flag (text modes) chooses the same three comparisons for the
+*numbers* — "Errors Left (Unfixed)" and "Total Errors Made" — and is independent of
+`markingMode`, so a task can show word alignment while scoring by character alignment.
+Every metric counts in characters, so a task's thresholds keep their meaning. Both flags
+default to `positional`, leaving existing courses unchanged, and an unrecognised value
+falls back to it with a console warning. See `client/text-metrics.js`.
+
 The `includeTranscript` config flag (any mode) makes completion append the expected
 and submitted transcriptions to `stats.txt` on submit — handled in `completion.js`
 (`saveCompletionStats`, layered on top of the shared serializer so `stats.js` stays
@@ -29,6 +45,7 @@ transcripts in STDOUT for the grader.
 - `client/state.js`: shared mutable state singleton used across all client modules
 - `client/config.js`: loads and normalizes runtime configuration from `client/config.json`
 - `client/text.js`: loads `client/text-to-input.txt`, initializes character state, renders text, and triggers completion for text-based modes
+- `client/text-metrics.js`: pure text-comparison helpers shared by rendering and scoring — positional, character-alignment (Levenshtein) and word-alignment marking, plus the error counts derived from them
 - `client/input.js`: central input and keydown handling with per-mode branches
 - `client/keyboard.js`: visual keyboard rendering, key availability checks, and key highlighting
 - `client/stats.js`: real-time/final stats calculation, stats parsing, and `/save-stats` persistence

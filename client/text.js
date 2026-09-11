@@ -2,6 +2,7 @@
 
 import { state } from './state.js';
 import { showCompletionScreen } from './completion.js';
+import { markText } from './text-metrics.js';
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -114,24 +115,34 @@ export function renderText() {
   }
 
   let html = '';
-  const currentPosition = state.typedText.length;
 
-  for (let i = 0; i < state.originalText.length; i++) {
-    const char = state.originalText[i];
-    const charState = state.charStates[i];
-    let className = 'char-';
+  // The configured marking mode decides what the typist is shown. Positional
+  // yields one span per reference character, exactly as before; the alignment
+  // modes can additionally report a skipped reference character or an added
+  // one that belongs to no reference position (see text-metrics.js).
+  const marks = markText(state.config.markingMode, state.typedText, state.originalText);
 
-    if (i < state.typedText.length) {
-      // Character has been typed
-      if (charState === 'incorrect') {
-        className += 'incorrect';
-      } else {
-        className += 'correct';
-      }
-    } else {
-      // Character not yet typed
-      className += 'pending';
+  // The cursor follows the typing, which is the last mark that consumed a typed
+  // character \u2014 under alignment that is not the same as the first untyped one,
+  // because skipped characters are marked behind it.
+  let currentPosition = 0;
+  for (let i = 0; i < marks.length; i++) {
+    if (marks[i].op !== 'pending' && marks[i].op !== 'missing') {
+      currentPosition = i + 1;
     }
+  }
+
+  const OP_CLASS = {
+    match: 'char-correct',
+    substitute: 'char-incorrect',
+    missing: 'char-missing',
+    extra: 'char-extra',
+    pending: 'char-pending'
+  };
+
+  for (let i = 0; i < marks.length; i++) {
+    const char = marks[i].char;
+    let className = OP_CLASS[marks[i].op];
 
     // Handle special characters that need escaping
     let displayChar = char;
@@ -165,7 +176,7 @@ export function renderText() {
   }
 
   // If all characters are typed, add a cursor position marker at the end
-  if (currentPosition === state.originalText.length) {
+  if (currentPosition >= marks.length) {
     html += '<span class="char-pending cursor-position">\u00A0</span>';
   }
 

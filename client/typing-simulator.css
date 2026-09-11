@@ -274,7 +274,9 @@
    character span to shape independently. */
 .bespoke .char-pending,
 .bespoke .char-correct,
-.bespoke .char-incorrect {
+.bespoke .char-incorrect,
+.bespoke .char-missing,
+.bespoke .char-extra {
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "hlig" 0;
 }
@@ -294,6 +296,30 @@
 .bespoke .typing-text .char-incorrect.char-space {
   background-color: color-mix(in srgb, var(--Colors-Alert-Error-Default) 30%, transparent);
   border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* The two marks only the alignment marking modes can produce (see
+   text-metrics.js). Positional comparison has no way to express either: it can
+   only call a fixed position right or wrong. */
+
+/* A reference character the typist skipped over entirely. */
+.bespoke .typing-text .char-missing {
+  color: var(--Colors-Alert-Error-Default);
+  border-bottom: 2px dotted var(--Colors-Alert-Error-Default);
+}
+
+/* A character the typist added that belongs to no reference position. */
+.bespoke .typing-text .char-extra {
+  color: var(--Colors-Alert-Warning-Default);
+  background-color: color-mix(in srgb, var(--Colors-Alert-Warning-Default) 16%, transparent);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  border-radius: 2px;
+}
+
+.bespoke .typing-text .char-extra.char-space {
+  background-color: color-mix(in srgb, var(--Colors-Alert-Warning-Default) 30%, transparent);
   padding: 0 2px;
 }
 

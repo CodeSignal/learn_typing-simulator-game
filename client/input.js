@@ -4,6 +4,7 @@ import { state } from './state.js';
 import { highlightKey, isKeyAvailable } from './keyboard.js';
 import { renderText } from './text.js';
 import { updateRealtimeStats } from './stats.js';
+import { countNewErrors } from './text-metrics.js';
 
 export function handleInput(e) {
   let input = e.target.value;
@@ -156,13 +157,15 @@ export function handleInput(e) {
   let lastInsertedIsError = false;
   for (let pos = start; pos < endCur && pos < state.originalText.length; pos++) {
     state.totalInputs++;
-    const isError = input[pos] !== state.originalText[pos];
-    if (isError) {
-      state.totalErrors++;
-    }
     lastInsertedChar = input[pos];
-    lastInsertedIsError = isError;
+    lastInsertedIsError = input[pos] !== state.originalText[pos];
   }
+
+  // How many of those keystrokes count as mistakes depends on the configured
+  // metric. Positional charges one per position that no longer lines up, so a
+  // single omission charges every character after it; the alignment metrics
+  // charge for the slip itself and let the typing carry on (text-metrics.js).
+  state.totalErrors += countNewErrors(state.config.errorMetric, prevTyped, input, state.originalText);
 
   // Guided mode (no allowMistakes; also racing) rejects everything from the first
   // character that doesn't match the expected text, so the user must fix it before
