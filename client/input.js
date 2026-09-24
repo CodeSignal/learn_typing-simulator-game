@@ -159,10 +159,13 @@ export function handleInput(e) {
 
   let lastInsertedChar = null;
   let lastInsertedIsError = false;
-  for (let pos = start; pos < endCur && pos < state.originalText.length; pos++) {
+  // Every accepted keystroke counts, including any past the end of the passage:
+  // under the alignment marking modes the text may run longer than the passage
+  // (see maxTypedLength), and the keystroke that finishes it can be one of those.
+  for (let pos = start; pos < endCur; pos++) {
     state.totalInputs++;
     lastInsertedChar = input[pos];
-    lastInsertedIsError = input[pos] !== state.originalText[pos];
+    lastInsertedIsError = pos >= state.originalText.length || input[pos] !== state.originalText[pos];
   }
 
   // How many of those keystrokes count as mistakes depends on the configured
@@ -372,7 +375,7 @@ const CURSOR_KEYS = new Set([
 // still being built and moving the cursor would break it.
 export function keepCaretAtEnd(e) {
   const field = state.hiddenInput;
-  if (!field || (e && e.isComposing)) {
+  if (!field || composing || (e && e.isComposing)) {
     return;
   }
 
@@ -382,6 +385,27 @@ export function keepCaretAtEnd(e) {
   }
 }
 
+// Whether an input method is mid-composition: a dead key, or a Japanese or
+// Chinese IME building up text. Key events say so (isComposing), but `select`
+// does not, and an IME may own a selection over the text it is composing, so
+// keep track here and leave the cursor alone until the composition is done.
+let composing = false;
+
+export function trackComposition(e) {
+  composing = e.type === 'compositionstart';
+  if (!composing) {
+    keepCaretAtEnd();
+  }
+}
+
+// Keystrokes an input method is handling. During a composition the IME uses the
+// arrow keys to move through its candidates or its segments, so they must reach
+// it. `isComposing` covers the composition itself; keyCode 229 is how browsers
+// mark a keystroke the IME has taken, including the one that starts it.
+function isImeKeystroke(e) {
+  return e.isComposing || e.keyCode === 229;
+}
+
 // Cmd+A on macOS, Ctrl+A elsewhere. On macOS Ctrl+A moves to the start of the
 // line instead, which is refused just the same.
 function isSelectAll(e) {
@@ -389,7 +413,7 @@ function isSelectAll(e) {
 }
 
 export function handleKeyDown(e) {
-  if (e.target === state.hiddenInput && (CURSOR_KEYS.has(e.key) || isSelectAll(e))) {
+  if (e.target === state.hiddenInput && !isImeKeystroke(e) && (CURSOR_KEYS.has(e.key) || isSelectAll(e))) {
     e.preventDefault();
     return;
   }
