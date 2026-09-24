@@ -33,7 +33,11 @@ npm run start:prod
 
 Runtime behavior is controlled by `client/config.json`:
 - `gameType`: `classic`, `racing`, `meteoriteRain`, `towerDefense`, or `audio`
-- `keyboard`: show/hide visual keyboard
+- `keyboard`: the on-screen keyboard. `false` (or omitted) hides it; `true` shows it and
+  flashes each key press, a wrong key in red; `"neutral"` shows it but flashes every key
+  press in the same colour, so it shows what was pressed without judging it. The passage
+  already marks mistakes, and under the alignment `markingMode`s a per-key verdict can
+  disagree with it. Any other value hides the keyboard with a console warning.
 - `availableKeys`: allowed keys (empty array means all keys)
 - `allowMistakes`: when `true`, wrong characters are accepted (shown as incorrect) and typing continues instead of being rejected — natural typing where accuracy and "errors left" reflect real performance; completion is reaching the end of the text. Default `false` (guided mode: wrong keystrokes are rejected and must be corrected to advance).
 - `showStats`: show final stats dashboard
