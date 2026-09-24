@@ -90,6 +90,17 @@ rather than from the hidden textarea, since the two wrap in completely different
 places. The audio/gist transcript box is a real, visible textarea, so it keeps the
 platform's own Cmd+Backspace and only borrows the word-delete chord.
 
+The cursor can't be moved in the text modes. Arrow keys, Home/End and Page
+Up/Down are refused on the typing field, and anything else that shifts a
+collapsed cursor (macOS's Ctrl+A / Ctrl+B style bindings, undo) is put back at
+the end when the key is released. The typing field is invisible — the cursor on
+screen is drawn from the marks — so a moved cursor left no visible trace:
+keystrokes landed where the typist couldn't see them, and Delete could end up
+with nothing in front of it. Going back to fix something is done with Backspace.
+A selection is left alone, so Cmd+A then Delete still clears the text. The
+audio/gist transcript box and the meteorite input are visible fields and keep
+normal cursor movement.
+
 In `audio` mode the target text is not shown. A recorded clip from `audio.src` is
 played through the browser's native audio player — play/pause, seek, elapsed /
 total time, volume, and playback speed (via its overflow menu) — and the user

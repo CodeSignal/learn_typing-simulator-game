@@ -129,8 +129,9 @@ export function handleInput(e) {
     e.target.value = input;
   }
 
-  // Editing commands (option+delete, cmd+z, arrow keys, clicking, select-and-
-  // retype) mean edits are not always appended at the end. Diffing by length and
+  // Editing commands (option+delete, cmd+z, select-and-retype) mean edits are
+  // not always appended at the end, even though the cursor itself is kept at the
+  // end (arrow keys are refused; see CURSOR_KEYS). Diffing by length and
   // slicing the tail desyncs the moment the caret leaves the end — every keystroke
   // then re-reads the same trailing character and the render drifts off-by-one.
   // Instead, reconcile the whole state from the input's real value each event, and
@@ -349,7 +350,37 @@ export function handleDeleteChord(e) {
   return true;
 }
 
+// Keys that only move the cursor. The typing field is invisible — the cursor on
+// screen is drawn from the marks — so moving the real one leaves no trace: the
+// next keystrokes land somewhere the typist can't see, and Delete can end up
+// with nothing in front of it to remove. Typing here is linear, and going back
+// to fix something is what Backspace is for.
+const CURSOR_KEYS = new Set([
+  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
+]);
+
+// The keys above are refused outright; this puts back anything else that still
+// moves a collapsed cursor — macOS's Ctrl+A / Ctrl+B / Ctrl+P style bindings,
+// undo — once the key is released. A selection is left alone, so Cmd+A then
+// Delete still clears the text.
+export function keepCaretAtEnd() {
+  const field = state.hiddenInput;
+  if (!field || field.selectionStart !== field.selectionEnd) {
+    return;
+  }
+
+  const end = field.value.length;
+  if (field.selectionStart !== end) {
+    field.setSelectionRange(end, end);
+  }
+}
+
 export function handleKeyDown(e) {
+  if (e.target === state.hiddenInput && CURSOR_KEYS.has(e.key)) {
+    e.preventDefault();
+    return;
+  }
+
   if (handleDeleteChord(e)) {
     return;
   }
