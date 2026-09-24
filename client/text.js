@@ -2,7 +2,7 @@
 
 import { state } from './state.js';
 import { showCompletionScreen } from './completion.js';
-import { markText } from './text-metrics.js';
+import { markText, nothingLeftToType } from './text-metrics.js';
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -70,17 +70,26 @@ export function renderText() {
     }
   }
 
+  // The configured marking mode decides what the typist is shown. Positional
+  // yields one span per reference character, exactly as before; the alignment
+  // modes can additionally report a skipped reference character or an added
+  // one that belongs to no reference position (see text-metrics.js). Computed
+  // up front because finishing the passage is judged off the same marks.
+  const marks = markText(state.config.markingMode, state.typedText, state.originalText);
+
   // Completion threshold. Racing always requires the full passage (finish-line
   // semantics). In allowMistakes mode (classic/text) the user can type through
-  // errors, so completion is reaching the end of the text. Otherwise it requires
-  // enough correct characters (guided mode, where wrong keystrokes are rejected).
+  // errors, so completion is reaching the end of the text — judged off the same
+  // marks the typist is looking at, so a skipped character doesn't leave the
+  // passage looking done but unfinishable. Otherwise it requires enough correct
+  // characters (guided mode, where wrong keystrokes are rejected).
   const textLength = state.originalText.length;
   const isRacing = state.config.gameType === 'racing';
   const mistakesAllowed = state.config.racing?.mistakesAllowed ?? 0;
   const requiredCorrectChars = isRacing ? textLength : textLength - mistakesAllowed;
   const isComplete = textLength > 0 && (
     (!isRacing && state.config.allowMistakes)
-      ? state.typedText.length >= textLength
+      ? nothingLeftToType(marks)
       : correctCharsCount >= requiredCorrectChars
   );
 
@@ -115,12 +124,6 @@ export function renderText() {
   }
 
   let html = '';
-
-  // The configured marking mode decides what the typist is shown. Positional
-  // yields one span per reference character, exactly as before; the alignment
-  // modes can additionally report a skipped reference character or an added
-  // one that belongs to no reference position (see text-metrics.js).
-  const marks = markText(state.config.markingMode, state.typedText, state.originalText);
 
   // The cursor follows the typing, which is the last mark that consumed a typed
   // character \u2014 under alignment that is not the same as the first untyped one,

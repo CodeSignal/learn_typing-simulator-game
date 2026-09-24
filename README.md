@@ -72,6 +72,13 @@ character at index 100 counts as **1** error under `character`, **3** under
 `word`, and **1,358** under `positional`, because every position after the slip
 is out of step. See `client/text-metrics.js`.
 
+Finishing the passage is judged off the same marks. Under `character` and `word`,
+reaching the last character finishes the task even if a character was skipped or
+added along the way. Counting keystrokes instead left a passage with one skipped
+character impossible to finish: it looked done, one mistake marked, and nothing
+happened. `positional` still needs as many characters typed as the passage has,
+which is visible there: the last character stays grey under the cursor.
+
 Backspace chords are handled by the app rather than left to the browser
 (`handleDeleteChord` in `client/input.js`):
 

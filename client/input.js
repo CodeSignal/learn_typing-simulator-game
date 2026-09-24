@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { highlightKey, isKeyAvailable } from './keyboard.js';
 import { renderText } from './text.js';
 import { updateRealtimeStats } from './stats.js';
-import { countNewErrors } from './text-metrics.js';
+import { countNewErrors, maxTypedLength } from './text-metrics.js';
 
 export function handleInput(e) {
   let input = e.target.value;
@@ -123,9 +123,12 @@ export function handleInput(e) {
     state.startTime = Date.now();
   }
 
-  // Prevent typing beyond the original text length
-  if (input.length > state.originalText.length) {
-    input = input.slice(0, state.originalText.length);
+  // Prevent typing beyond the end of the passage. Under the alignment marking
+  // modes an extra character moves that end one keystroke further out, so the
+  // limit comes from the marking mode rather than the passage length alone.
+  const limit = maxTypedLength(state.config.markingMode, state.originalText.length);
+  if (input.length > limit) {
+    input = input.slice(0, limit);
     e.target.value = input;
   }
 
@@ -496,7 +499,7 @@ export function handleKeyDown(e) {
     }
 
     // Check if we can still type (not beyond original text length)
-    if (state.hiddenInput.value.length >= state.originalText.length) {
+    if (state.hiddenInput.value.length >= maxTypedLength(state.config.markingMode, state.originalText.length)) {
       e.preventDefault(); // Can't type beyond original text
       return;
     }
@@ -523,7 +526,7 @@ export function handleKeyDown(e) {
     }
 
     // Check if we can still type (not beyond original text length)
-    if (state.hiddenInput.value.length >= state.originalText.length) {
+    if (state.hiddenInput.value.length >= maxTypedLength(state.config.markingMode, state.originalText.length)) {
       return; // Can't type beyond original text
     }
 

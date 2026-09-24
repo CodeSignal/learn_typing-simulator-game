@@ -297,6 +297,28 @@ export function markText(mode, typed, reference) {
   }
 }
 
+// Whether the marks leave nothing still to type — the end of the passage as the
+// typist sees it. Positionally that is just having typed as many characters as
+// the passage has. Under alignment a skipped character is marked `missing`, not
+// pending, so reaching the last character finishes the passage whatever was
+// skipped on the way. Counting keystrokes instead left a passage with one
+// skipped character impossible to finish: the display showed it done, one
+// mistake marked, and nothing happened.
+export function nothingLeftToType(ops) {
+  for (let i = 0; i < ops.length; i++) {
+    if (ops[i].op === 'pending') return false;
+  }
+  return true;
+}
+
+// How long the typed text may grow. Positionally, never past the passage. Under
+// alignment an extra character pushes the end of the passage one keystroke
+// further out, so capping at the passage length would refuse exactly the
+// keystroke that finishes it; allow the drift the alignment itself tolerates.
+export function maxTypedLength(mode, referenceLength) {
+  return normalizeMarkingMode(mode) === 'positional' ? referenceLength : referenceLength + MAX_DRIFT;
+}
+
 export function countMarkedErrors(ops) {
   let errors = 0;
   for (let i = 0; i < ops.length; i++) {
