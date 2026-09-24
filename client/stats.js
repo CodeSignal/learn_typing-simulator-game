@@ -342,6 +342,14 @@ export function updateRealtimeStats() {
     state.realtimeStatsContainer.appendChild(statItem);
   });
 
+  // Rebuilt with the stats each tick, so it lives and goes with them.
+  if (state.capsLockOn) {
+    const notice = document.createElement('div');
+    notice.className = 'caps-lock-notice';
+    notice.textContent = '⇪ Caps Lock is on';
+    state.realtimeStatsContainer.appendChild(notice);
+  }
+
   const hasActiveTimer = state.config.gameType === 'meteoriteRain' || state.startTime !== null;
 
   if (hasActiveTimer && !state.realtimeStatsInterval) {

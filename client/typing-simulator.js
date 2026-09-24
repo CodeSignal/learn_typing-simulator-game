@@ -3,7 +3,7 @@
 import { state } from './state.js';
 import { loadConfig } from './config.js';
 import { loadText } from './text.js';
-import { initializeKeyboard } from './keyboard.js';
+import { initializeKeyboard, trackCapsLock } from './keyboard.js';
 import { handleInput, handleKeyDown } from './input.js';
 import { updateRealtimeStats } from './stats.js';
 import { restart } from './restart.js';
@@ -49,6 +49,11 @@ async function initialize() {
   initializeKeyboard();
 
   // Set up event listeners
+  // Caps Lock state rides on every key and mouse event, whichever field has focus.
+  for (const type of ['keydown', 'keyup', 'mousedown']) {
+    document.addEventListener(type, trackCapsLock, true);
+  }
+
   state.hiddenInput.addEventListener('input', handleInput);
   state.hiddenInput.addEventListener('keydown', handleKeyDown);
 

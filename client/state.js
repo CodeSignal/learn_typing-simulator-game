@@ -28,6 +28,7 @@ export const state = {
 
   // Keyboard state
   keyboardEnabled: false,
+  capsLockOn: false,
   activeKeyElement: null,
   activeKeyTimeout: null,
 

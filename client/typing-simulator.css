@@ -209,6 +209,23 @@
   min-width: 0;
 }
 
+/* Under the live stats while Caps Lock is on (trackCapsLock in keyboard.js). */
+.bespoke .caps-lock-notice {
+  font-size: var(--Fonts-Body-Default-xs);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--Colors-Alert-Warning-Default);
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+/* The Caps key stays lit while Caps Lock is on: a steady state, unlike the
+   brief flash of a key press. */
+.bespoke .keyboard-key.locked {
+  border-color: var(--Colors-Alert-Warning-Default);
+  background: color-mix(in srgb, var(--Colors-Alert-Warning-Default) 15%, transparent);
+}
+
 .bespoke .realtime-stat-label {
   font-size: var(--Fonts-Body-Default-xs);
   color: var(--Colors-Text-Body-Medium);
