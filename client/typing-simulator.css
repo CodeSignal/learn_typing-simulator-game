@@ -360,15 +360,26 @@
   }
 }
 
+/* The field typing actually goes into. It is invisible and inert, but it needs
+   a real size: with no width the browser has no line boxes to lay text out in,
+   and text that arrives through the operating system's text input goes wrong —
+   a dead key (Option+E then E, or ' and " on US-International) replaced
+   everything typed so far with the composed character, and a committed insert
+   (dictation, the emoji picker) moved the cursor to the start. It is pinned to
+   the corner of the typing area and exactly as wide, so the cursor inside it is
+   always within view and the browser never scrolls the page to follow it. */
 .bespoke .hidden-input {
   position: absolute;
+  top: 0;
+  left: 0;
   opacity: 0;
   pointer-events: none;
-  width: 0;
-  height: 0;
+  width: 100%;
+  height: 2em;
   border: none;
   padding: 0;
   margin: 0;
+  resize: none;
 }
 
 /* Audio dictation mode */
