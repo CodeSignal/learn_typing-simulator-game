@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { loadConfig } from './config.js';
 import { loadText } from './text.js';
 import { initializeKeyboard } from './keyboard.js';
-import { handleInput, handleKeyDown } from './input.js';
+import { handleInput, handleKeyDown, keepCaretAtEnd, trackComposition } from './input.js';
 import { updateRealtimeStats } from './stats.js';
 import { restart } from './restart.js';
 import { initializeGame } from './game-manager.js';
@@ -51,6 +51,10 @@ async function initialize() {
   // Set up event listeners
   state.hiddenInput.addEventListener('input', handleInput);
   state.hiddenInput.addEventListener('keydown', handleKeyDown);
+  state.hiddenInput.addEventListener('keyup', keepCaretAtEnd);
+  state.hiddenInput.addEventListener('select', keepCaretAtEnd);
+  state.hiddenInput.addEventListener('compositionstart', trackComposition);
+  state.hiddenInput.addEventListener('compositionend', trackComposition);
 
   // Add global keydown listener for tower defense to auto-focus input when typing
   if (state.config.gameType === 'towerDefense') {

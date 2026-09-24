@@ -72,6 +72,13 @@ character at index 100 counts as **1** error under `character`, **3** under
 `word`, and **1,358** under `positional`, because every position after the slip
 is out of step. See `client/text-metrics.js`.
 
+Finishing the passage is judged off the same marks. Under `character` and `word`,
+reaching the last character finishes the task even if a character was skipped or
+added along the way. Counting keystrokes instead left a passage with one skipped
+character impossible to finish: it looked done, one mistake marked, and nothing
+happened. `positional` still needs as many characters typed as the passage has,
+which is visible there: the last character stays grey under the cursor.
+
 Backspace chords are handled by the app rather than left to the browser
 (`handleDeleteChord` in `client/input.js`):
 
@@ -89,6 +96,20 @@ character, so the row is read off the layout the user is actually looking at)
 rather than from the hidden textarea, since the two wrap in completely different
 places. The audio/gist transcript box is a real, visible textarea, so it keeps the
 platform's own Cmd+Backspace and only borrows the word-delete chord.
+
+The cursor can't be moved in the text modes. Arrow keys, Home/End and Page
+Up/Down are refused on the typing field, and anything else that shifts a
+cursor (macOS's Ctrl+B style bindings, undo) is put back at the end when the
+key is released. The typing field is invisible — the cursor on
+screen is drawn from the marks — so a moved cursor left no visible trace:
+keystrokes landed where the typist couldn't see them, and Delete could end up
+with nothing in front of it. Going back to fix something is done with Backspace.
+Text can't be selected either: Cmd+A / Ctrl+A is refused, and a selection made
+any other way (the browser's Edit menu) is collapsed, since after select-all one
+Delete clears the passage and one typed letter replaces it. The cursor is left
+alone mid-composition, so dead keys (´ then a → á) still work. The
+audio/gist transcript box and the meteorite input are visible fields and keep
+normal cursor movement.
 
 In `audio` mode the target text is not shown. A recorded clip from `audio.src` is
 played through the browser's native audio player — play/pause, seek, elapsed /

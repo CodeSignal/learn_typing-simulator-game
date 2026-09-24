@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { highlightKey, isKeyAvailable } from './keyboard.js';
 import { renderText } from './text.js';
 import { updateRealtimeStats } from './stats.js';
-import { countNewErrors } from './text-metrics.js';
+import { countNewErrors, maxTypedLength } from './text-metrics.js';
 
 export function handleInput(e) {
   let input = e.target.value;
@@ -123,14 +123,18 @@ export function handleInput(e) {
     state.startTime = Date.now();
   }
 
-  // Prevent typing beyond the original text length
-  if (input.length > state.originalText.length) {
-    input = input.slice(0, state.originalText.length);
+  // Prevent typing beyond the end of the passage. Under the alignment marking
+  // modes an extra character moves that end one keystroke further out, so the
+  // limit comes from the marking mode rather than the passage length alone.
+  const limit = maxTypedLength(state.config.markingMode, state.originalText.length);
+  if (input.length > limit) {
+    input = input.slice(0, limit);
     e.target.value = input;
   }
 
-  // Editing commands (option+delete, cmd+z, arrow keys, clicking, select-and-
-  // retype) mean edits are not always appended at the end. Diffing by length and
+  // Editing commands (option+delete, cmd+z, select-and-retype) mean edits are
+  // not always appended at the end, even though the cursor itself is kept at the
+  // end (arrow keys are refused; see CURSOR_KEYS). Diffing by length and
   // slicing the tail desyncs the moment the caret leaves the end — every keystroke
   // then re-reads the same trailing character and the render drifts off-by-one.
   // Instead, reconcile the whole state from the input's real value each event, and
@@ -155,10 +159,13 @@ export function handleInput(e) {
 
   let lastInsertedChar = null;
   let lastInsertedIsError = false;
-  for (let pos = start; pos < endCur && pos < state.originalText.length; pos++) {
+  // Every accepted keystroke counts, including any past the end of the passage:
+  // under the alignment marking modes the text may run longer than the passage
+  // (see maxTypedLength), and the keystroke that finishes it can be one of those.
+  for (let pos = start; pos < endCur; pos++) {
     state.totalInputs++;
     lastInsertedChar = input[pos];
-    lastInsertedIsError = input[pos] !== state.originalText[pos];
+    lastInsertedIsError = pos >= state.originalText.length || input[pos] !== state.originalText[pos];
   }
 
   // How many of those keystrokes count as mistakes depends on the configured
@@ -349,7 +356,68 @@ export function handleDeleteChord(e) {
   return true;
 }
 
+// Keys that only move the cursor. The typing field is invisible — the cursor on
+// screen is drawn from the marks — so moving the real one leaves no trace: the
+// next keystrokes land somewhere the typist can't see, and Delete can end up
+// with nothing in front of it to remove. Typing here is linear, and going back
+// to fix something is what Backspace is for.
+const CURSOR_KEYS = new Set([
+  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'
+]);
+
+// The keys above are refused outright; this puts back anything else that still
+// moves the cursor — macOS's Ctrl+B / Ctrl+P style bindings, undo — once the key
+// is released. It also collapses a selection, which the typing field never
+// needs: after select-all, one Delete clears the passage and one typed letter
+// replaces it. Select-all is refused as a keystroke below, but the browser's
+// Edit menu selects without sending one, so this also runs on `select`. It
+// stays out of the way mid-composition, where a dead key (´ then a → á) is
+// still being built and moving the cursor would break it.
+export function keepCaretAtEnd(e) {
+  const field = state.hiddenInput;
+  if (!field || composing || (e && e.isComposing)) {
+    return;
+  }
+
+  const end = field.value.length;
+  if (field.selectionStart !== end || field.selectionEnd !== end) {
+    field.setSelectionRange(end, end);
+  }
+}
+
+// Whether an input method is mid-composition: a dead key, or a Japanese or
+// Chinese IME building up text. Key events say so (isComposing), but `select`
+// does not, and an IME may own a selection over the text it is composing, so
+// keep track here and leave the cursor alone until the composition is done.
+let composing = false;
+
+export function trackComposition(e) {
+  composing = e.type === 'compositionstart';
+  if (!composing) {
+    keepCaretAtEnd();
+  }
+}
+
+// Keystrokes an input method is handling. During a composition the IME uses the
+// arrow keys to move through its candidates or its segments, so they must reach
+// it. `isComposing` covers the composition itself; keyCode 229 is how browsers
+// mark a keystroke the IME has taken, including the one that starts it.
+function isImeKeystroke(e) {
+  return e.isComposing || e.keyCode === 229;
+}
+
+// Cmd+A on macOS, Ctrl+A elsewhere. On macOS Ctrl+A moves to the start of the
+// line instead, which is refused just the same.
+function isSelectAll(e) {
+  return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a';
+}
+
 export function handleKeyDown(e) {
+  if (e.target === state.hiddenInput && !isImeKeystroke(e) && (CURSOR_KEYS.has(e.key) || isSelectAll(e))) {
+    e.preventDefault();
+    return;
+  }
+
   if (handleDeleteChord(e)) {
     return;
   }
@@ -455,7 +523,7 @@ export function handleKeyDown(e) {
     }
 
     // Check if we can still type (not beyond original text length)
-    if (state.hiddenInput.value.length >= state.originalText.length) {
+    if (state.hiddenInput.value.length >= maxTypedLength(state.config.markingMode, state.originalText.length)) {
       e.preventDefault(); // Can't type beyond original text
       return;
     }
@@ -482,7 +550,7 @@ export function handleKeyDown(e) {
     }
 
     // Check if we can still type (not beyond original text length)
-    if (state.hiddenInput.value.length >= state.originalText.length) {
+    if (state.hiddenInput.value.length >= maxTypedLength(state.config.markingMode, state.originalText.length)) {
       return; // Can't type beyond original text
     }
 
