@@ -37,7 +37,10 @@ Runtime behavior is controlled by `client/config.json`:
 - `availableKeys`: allowed keys (empty array means all keys)
 - `allowMistakes`: when `true`, wrong characters are accepted (shown as incorrect) and typing continues instead of being rejected — natural typing where accuracy and "errors left" reflect real performance; completion is reaching the end of the text. Default `false` (guided mode: wrong keystrokes are rejected and must be corrected to advance).
 - `showStats`: show final stats dashboard
-- `realTimeStats`: enabled live metrics (`speed`, `accuracy`, `time`, `errors`, `errorsLeft`, `chars`)
+- `realTimeStats`: enabled live metrics (`speed`, `accuracy`, `time`, `errors`, `errorsLeft`, `chars`).
+  While Caps Lock is on, a *Caps Lock is on* line appears under them and the on-screen Caps key
+  stays lit: with Caps Lock on, the right keys produce capitals the passage marks wrong, and
+  nothing else on screen says why. Tasks with no live stats get the lit key only.
 - `includeTranscript`: when `true` (any mode), the saved `stats.txt` also includes the expected (reference) and submitted (typed) transcriptions, so a grader can compare the actual transcription — not just the numbers. Default `false`.
 - `gradeMode`: `"gist"` turns an `audio` task into a meeting-notes task graded on meaning, not verbatim match. The candidate captures the main points rather than transcribing exactly, so the accuracy/error stats are hidden (only Speed / Time show), and — with `includeTranscript` — `stats.txt` also carries a `Key Points:` block (from `keyPoints`) before the verbatim transcript so the grader can score coverage and verify captured facts. Default: normal verbatim grading.
 - `keyPoints`: array of strings (used with `gradeMode: "gist"`) — the reference key points/main ideas the notes should capture; emitted into `stats.txt` for the grader.

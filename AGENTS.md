@@ -47,7 +47,7 @@ transcripts in STDOUT for the grader.
 - `client/text.js`: loads `client/text-to-input.txt`, initializes character state, renders text, and triggers completion for text-based modes
 - `client/text-metrics.js`: pure text-comparison helpers shared by rendering and scoring — positional, character-alignment (Levenshtein) and word-alignment marking, plus the error counts derived from them
 - `client/input.js`: central input and keydown handling with per-mode branches
-- `client/keyboard.js`: visual keyboard rendering, key availability checks, and key highlighting
+- `client/keyboard.js`: visual keyboard rendering, key availability checks, and key highlighting, plus Caps Lock tracking (`trackCapsLock`: the lit Caps key and the notice under the live stats)
 - `client/stats.js`: real-time/final stats calculation, stats parsing, and `/save-stats` persistence
 - `client/completion.js`: completion screen and stats dashboard flow
 - `client/restart.js`: reset and restart flow for all game modes
