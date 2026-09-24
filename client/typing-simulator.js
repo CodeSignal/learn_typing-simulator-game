@@ -52,6 +52,7 @@ async function initialize() {
   state.hiddenInput.addEventListener('input', handleInput);
   state.hiddenInput.addEventListener('keydown', handleKeyDown);
   state.hiddenInput.addEventListener('keyup', keepCaretAtEnd);
+  state.hiddenInput.addEventListener('select', keepCaretAtEnd);
 
   // Add global keydown listener for tower defense to auto-focus input when typing
   if (state.config.gameType === 'towerDefense') {

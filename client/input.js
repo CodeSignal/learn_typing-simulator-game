@@ -360,23 +360,33 @@ const CURSOR_KEYS = new Set([
 ]);
 
 // The keys above are refused outright; this puts back anything else that still
-// moves a collapsed cursor — macOS's Ctrl+A / Ctrl+B / Ctrl+P style bindings,
-// undo — once the key is released. A selection is left alone, so Cmd+A then
-// Delete still clears the text.
-export function keepCaretAtEnd() {
+// moves the cursor — macOS's Ctrl+B / Ctrl+P style bindings, undo — once the key
+// is released. It also collapses a selection, which the typing field never
+// needs: after select-all, one Delete clears the passage and one typed letter
+// replaces it. Select-all is refused as a keystroke below, but the browser's
+// Edit menu selects without sending one, so this also runs on `select`. It
+// stays out of the way mid-composition, where a dead key (´ then a → á) is
+// still being built and moving the cursor would break it.
+export function keepCaretAtEnd(e) {
   const field = state.hiddenInput;
-  if (!field || field.selectionStart !== field.selectionEnd) {
+  if (!field || (e && e.isComposing)) {
     return;
   }
 
   const end = field.value.length;
-  if (field.selectionStart !== end) {
+  if (field.selectionStart !== end || field.selectionEnd !== end) {
     field.setSelectionRange(end, end);
   }
 }
 
+// Cmd+A on macOS, Ctrl+A elsewhere. On macOS Ctrl+A moves to the start of the
+// line instead, which is refused just the same.
+function isSelectAll(e) {
+  return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a';
+}
+
 export function handleKeyDown(e) {
-  if (e.target === state.hiddenInput && CURSOR_KEYS.has(e.key)) {
+  if (e.target === state.hiddenInput && (CURSOR_KEYS.has(e.key) || isSelectAll(e))) {
     e.preventDefault();
     return;
   }

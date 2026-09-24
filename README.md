@@ -92,12 +92,15 @@ platform's own Cmd+Backspace and only borrows the word-delete chord.
 
 The cursor can't be moved in the text modes. Arrow keys, Home/End and Page
 Up/Down are refused on the typing field, and anything else that shifts a
-collapsed cursor (macOS's Ctrl+A / Ctrl+B style bindings, undo) is put back at
-the end when the key is released. The typing field is invisible — the cursor on
+cursor (macOS's Ctrl+B style bindings, undo) is put back at the end when the
+key is released. The typing field is invisible — the cursor on
 screen is drawn from the marks — so a moved cursor left no visible trace:
 keystrokes landed where the typist couldn't see them, and Delete could end up
 with nothing in front of it. Going back to fix something is done with Backspace.
-A selection is left alone, so Cmd+A then Delete still clears the text. The
+Text can't be selected either: Cmd+A / Ctrl+A is refused, and a selection made
+any other way (the browser's Edit menu) is collapsed, since after select-all one
+Delete clears the passage and one typed letter replaces it. The cursor is left
+alone mid-composition, so dead keys (´ then a → á) still work. The
 audio/gist transcript box and the meteorite input are visible fields and keep
 normal cursor movement.
 
