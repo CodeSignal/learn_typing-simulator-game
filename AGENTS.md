@@ -28,7 +28,9 @@ express, `char-missing` and `char-extra`.
 The `errorMetric` config flag (text modes) chooses the same three comparisons for the
 *numbers* — "Errors Left (Unfixed)" and "Total Errors Made" — and is independent of
 `markingMode`, so a task can show word alignment while scoring by character alignment.
-Every metric counts in characters, so a task's thresholds keep their meaning. Both flags
+Every metric counts in characters, so a task's thresholds keep their meaning. Finishing
+a passage (`allowMistakes`) is judged off the `markingMode` marks too: nothing left to
+type, rather than a keystroke count, so a skipped character can't make it unfinishable. Both flags
 default to `positional`, leaving existing courses unchanged, and an unrecognised value
 falls back to it with a console warning. See `client/text-metrics.js`.
 
