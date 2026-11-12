@@ -111,7 +111,7 @@ export function highlightKey(char, isError = false) {
   const keyElement = getKeyElement(char);
   if (keyElement) {
     state.activeKeyElement = keyElement;
-    if (isError) {
+    if (isError && state.keyboardMarksErrors) {
       keyElement.classList.add('active-error');
     } else {
       keyElement.classList.add('active');
@@ -190,7 +190,18 @@ export function initializeKeyboard() {
   state.keyboardContainer = document.getElementById('keyboard-container');
   if (!state.keyboardContainer) return;
 
-  state.keyboardEnabled = state.config.keyboard === true;
+  // `true` shows the keyboard and flashes a wrong key in red. "neutral" shows it
+  // but flashes every key press the same way, so the keyboard reports what was
+  // pressed without judging it — the passage already marks mistakes, and under
+  // the alignment marking modes a per-key verdict can disagree with it.
+  // `false`, or leaving it out, hides it. Only `true` ever showed it before, so
+  // any other value keeps hiding it.
+  const mode = state.config.keyboard;
+  if (mode !== undefined && mode !== true && mode !== false && mode !== 'neutral') {
+    console.warn(`Unknown keyboard "${mode}", hiding the keyboard`);
+  }
+  state.keyboardEnabled = mode === true || mode === 'neutral';
+  state.keyboardMarksErrors = mode === true;
 
   if (state.keyboardEnabled) {
     renderKeyboard();

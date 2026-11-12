@@ -16,6 +16,11 @@ The `allowMistakes` config flag (classic/text modes) toggles natural typing (wro
 characters are accepted and marked incorrect, completion is reaching the end of the
 text) versus the default guided mode (wrong keystrokes are rejected until corrected).
 
+The `keyboard` config flag takes `false` (hidden, the default), `true` (shown; a wrong
+key flashes red), or `"neutral"` (shown; every key press flashes the same colour, so the
+keyboard never judges a keystroke). The verdict is applied in one place, `highlightKey`
+in `client/keyboard.js`, so every game mode honours it.
+
 The `markingMode` config flag (text modes) chooses how typed text is compared with
 the reference *on screen*: `positional` (default, the original behaviour — one span
 per reference character, right or wrong at a fixed index), `character` (Levenshtein
