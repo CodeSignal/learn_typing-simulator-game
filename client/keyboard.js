@@ -1,6 +1,7 @@
 // keyboard.js — keyboard layout, rendering, and highlight logic
 
 import { state } from './state.js';
+import { updateRealtimeStats } from './stats.js';
 
 // Keyboard layout definition
 const keyboardLayout = [
@@ -124,6 +125,28 @@ export function highlightKey(char, isError = false) {
       }
       state.activeKeyElement = null;
     }, 200);
+  }
+}
+
+// Caps Lock turns every lowercase letter into a capital, which the passage then
+// rightly marks wrong: the typist is pressing the right keys and watching them
+// go red with no explanation. Every key and mouse event reports the lock state,
+// so follow it and say so — a line under the live stats, and a lit Caps key on
+// the on-screen keyboard.
+export function trackCapsLock(e) {
+  if (!e || typeof e.getModifierState !== 'function') return;
+
+  const on = e.getModifierState('CapsLock');
+  if (on === state.capsLockOn) return;
+  state.capsLockOn = on;
+
+  const capsKey = state.keyboardContainer && state.keyboardContainer.querySelector('[data-key="caps"]');
+  if (capsKey) capsKey.classList.toggle('locked', on);
+
+  // Redraw the stats now rather than on their next tick, but never bring them
+  // back once the result view has hidden them.
+  if (state.realtimeStatsContainer && state.realtimeStatsContainer.style.display === 'flex') {
+    updateRealtimeStats();
   }
 }
 
