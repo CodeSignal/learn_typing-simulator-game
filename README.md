@@ -80,14 +80,22 @@ Backspace chords are handled by the app rather than left to the browser
   front of it.
 - **Cmd+Backspace** deletes to the start of the visible line.
 
-This is deliberate rather than defensive. The text modes type into
-`#hidden-input`, which is 0 pixels wide, and with no usable line box Chrome's own
-word-delete collapses to the start of the line (wiping the line instead of a
-word) while its delete-to-line-start collapses to a single character. Cmd+Backspace
-additionally has to measure "the line" from the rendered passage (one `<span>` per
-character, so the row is read off the layout the user is actually looking at)
-rather than from the hidden textarea, since the two wrap in completely different
-places. The audio/gist transcript box is a real, visible textarea, so it keeps the
+The text modes type into `#hidden-input`, an invisible textarea, so the
+browser's own versions of these chords work off *its* layout rather than the
+passage the user is reading. Cmd+Backspace has to measure "the line" from the
+rendered passage (one `<span>` per character, so the row is read off what the
+user is actually looking at), since the two wrap in completely different places.
+
+`#hidden-input` is invisible and inert, but it is deliberately given a real size:
+it sits in the top-left corner of the typing area and is exactly as wide. It used
+to be 0 pixels wide, which left the browser no line boxes to lay text out in.
+Ordinary keystrokes still worked, but text arriving through the operating
+system's text input went wrong: a dead key (Option+E then E, or `'` and `"` on
+US-International) replaced everything typed so far with the composed character,
+and a committed insert (dictation, the emoji picker) moved the cursor to the
+start. Its own word-delete also wiped whole lines. Keeping it exactly as wide as
+the typing area means its cursor is always within view, so the browser never
+scrolls the page to follow it. The audio/gist transcript box is a real, visible textarea, so it keeps the
 platform's own Cmd+Backspace and only borrows the word-delete chord.
 
 In `audio` mode the target text is not shown. A recorded clip from `audio.src` is

@@ -258,8 +258,9 @@ function visibleRowStart(chars, rowIndex) {
 
 // Start offset for a delete-to-start-of-line. The platform derives "the line"
 // from the field's own layout, which is meaningless for the text modes: they
-// type into a 0-width hidden textarea while the passage the user actually reads
-// is rendered elsewhere as one span per character. So take the row from those
+// type into an invisible textarea that wraps at its own width, while the
+// passage the user actually reads is rendered elsewhere as one span per
+// character and wraps somewhere else entirely. So take the row from those
 // spans, and fall back to the logical line only in the modes that render no
 // passage at all (tower defense, meteorite rain).
 function lineDeleteStart(field, caret) {
@@ -298,12 +299,12 @@ function applyDelete(field, start, end) {
 }
 
 // Backspace chords: Option/Alt (or Ctrl on Windows/Linux) deletes the previous
-// word, Cmd deletes to the start of the line. Neither can be left to the browser
-// in the text modes, because `#hidden-input` is 0 pixels wide: with no usable
-// line box Blink's word delete collapses to the start of the line (wiping the
-// line instead of a word) and its delete-to-line-start collapses to a single
-// character. Routing both chords through here makes every typing surface behave
-// the same, off the layout the user is actually looking at.
+// word, Cmd deletes to the start of the line. The browser's own versions work
+// off the invisible field's layout rather than the passage the user reads, and
+// they used to fail outright while `#hidden-input` was 0 pixels wide (word
+// delete wiped the whole line). Routing both chords through here makes every
+// typing surface behave the same, off the layout the user is actually looking
+// at.
 export function handleDeleteChord(e) {
   if (e.key !== 'Backspace') {
     return false;
