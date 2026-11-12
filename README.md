@@ -33,7 +33,11 @@ npm run start:prod
 
 Runtime behavior is controlled by `client/config.json`:
 - `gameType`: `classic`, `racing`, `meteoriteRain`, `towerDefense`, or `audio`
-- `keyboard`: show/hide visual keyboard
+- `keyboard`: the on-screen keyboard. `false` (or omitted) hides it; `true` shows it and
+  flashes each key press, a wrong key in red; `"neutral"` shows it but flashes every key
+  press in the same colour, so it shows what was pressed without judging it. The passage
+  already marks mistakes, and under the alignment `markingMode`s a per-key verdict can
+  disagree with it. Any other value hides the keyboard with a console warning.
 - `availableKeys`: allowed keys (empty array means all keys)
 - `allowMistakes`: when `true`, wrong characters are accepted (shown as incorrect) and typing continues instead of being rejected — natural typing where accuracy and "errors left" reflect real performance; completion is reaching the end of the text. Default `false` (guided mode: wrong keystrokes are rejected and must be corrected to advance).
 - `showStats`: show final stats dashboard
@@ -75,6 +79,13 @@ character at index 100 counts as **1** error under `character`, **3** under
 `word`, and **1,358** under `positional`, because every position after the slip
 is out of step. See `client/text-metrics.js`.
 
+Finishing the passage is judged off the same marks. Under `character` and `word`,
+reaching the last character finishes the task even if a character was skipped or
+added along the way. Counting keystrokes instead left a passage with one skipped
+character impossible to finish: it looked done, one mistake marked, and nothing
+happened. `positional` still needs as many characters typed as the passage has,
+which is visible there: the last character stays grey under the cursor.
+
 Backspace chords are handled by the app rather than left to the browser
 (`handleDeleteChord` in `client/input.js`):
 
@@ -83,15 +94,37 @@ Backspace chords are handled by the app rather than left to the browser
   front of it.
 - **Cmd+Backspace** deletes to the start of the visible line.
 
-This is deliberate rather than defensive. The text modes type into
-`#hidden-input`, which is 0 pixels wide, and with no usable line box Chrome's own
-word-delete collapses to the start of the line (wiping the line instead of a
-word) while its delete-to-line-start collapses to a single character. Cmd+Backspace
-additionally has to measure "the line" from the rendered passage (one `<span>` per
-character, so the row is read off the layout the user is actually looking at)
-rather than from the hidden textarea, since the two wrap in completely different
-places. The audio/gist transcript box is a real, visible textarea, so it keeps the
+The text modes type into `#hidden-input`, an invisible textarea, so the
+browser's own versions of these chords work off *its* layout rather than the
+passage the user is reading. Cmd+Backspace has to measure "the line" from the
+rendered passage (one `<span>` per character, so the row is read off what the
+user is actually looking at), since the two wrap in completely different places.
+
+`#hidden-input` is invisible and inert, but it is deliberately given a real size:
+it sits in the top-left corner of the typing area and is exactly as wide. It used
+to be 0 pixels wide, which left the browser no line boxes to lay text out in.
+Ordinary keystrokes still worked, but text arriving through the operating
+system's text input went wrong: a dead key (Option+E then E, or `'` and `"` on
+US-International) replaced everything typed so far with the composed character,
+and a committed insert (dictation, the emoji picker) moved the cursor to the
+start. Its own word-delete also wiped whole lines. Keeping it exactly as wide as
+the typing area means its cursor is always within view, so the browser never
+scrolls the page to follow it. The audio/gist transcript box is a real, visible textarea, so it keeps the
 platform's own Cmd+Backspace and only borrows the word-delete chord.
+
+The cursor can't be moved in the text modes. Arrow keys, Home/End and Page
+Up/Down are refused on the typing field, and anything else that shifts a
+cursor (macOS's Ctrl+B style bindings, undo) is put back at the end when the
+key is released. The typing field is invisible — the cursor on
+screen is drawn from the marks — so a moved cursor left no visible trace:
+keystrokes landed where the typist couldn't see them, and Delete could end up
+with nothing in front of it. Going back to fix something is done with Backspace.
+Text can't be selected either: Cmd+A / Ctrl+A is refused, and a selection made
+any other way (the browser's Edit menu) is collapsed, since after select-all one
+Delete clears the passage and one typed letter replaces it. The cursor is left
+alone mid-composition, so dead keys (´ then a → á) still work. The
+audio/gist transcript box and the meteorite input are visible fields and keep
+normal cursor movement.
 
 In `audio` mode the target text is not shown. A recorded clip from `audio.src` is
 played through the browser's native audio player — play/pause, seek, elapsed /

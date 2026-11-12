@@ -16,6 +16,11 @@ The `allowMistakes` config flag (classic/text modes) toggles natural typing (wro
 characters are accepted and marked incorrect, completion is reaching the end of the
 text) versus the default guided mode (wrong keystrokes are rejected until corrected).
 
+The `keyboard` config flag takes `false` (hidden, the default), `true` (shown; a wrong
+key flashes red), or `"neutral"` (shown; every key press flashes the same colour, so the
+keyboard never judges a keystroke). The verdict is applied in one place, `highlightKey`
+in `client/keyboard.js`, so every game mode honours it.
+
 The `markingMode` config flag (text modes) chooses how typed text is compared with
 the reference *on screen*: `positional` (default, the original behaviour — one span
 per reference character, right or wrong at a fixed index), `character` (Levenshtein
@@ -28,7 +33,9 @@ express, `char-missing` and `char-extra`.
 The `errorMetric` config flag (text modes) chooses the same three comparisons for the
 *numbers* — "Errors Left (Unfixed)" and "Total Errors Made" — and is independent of
 `markingMode`, so a task can show word alignment while scoring by character alignment.
-Every metric counts in characters, so a task's thresholds keep their meaning. Both flags
+Every metric counts in characters, so a task's thresholds keep their meaning. Finishing
+a passage (`allowMistakes`) is judged off the `markingMode` marks too: nothing left to
+type, rather than a keystroke count, so a skipped character can't make it unfinishable. Both flags
 default to `positional`, leaving existing courses unchanged, and an unrecognised value
 falls back to it with a console warning. See `client/text-metrics.js`.
 
